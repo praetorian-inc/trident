@@ -1,8 +1,19 @@
 package main
 
 import (
-	"http"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"net/http"
+	"strings"
 	"time"
+
+	"github.com/golang/gddo/httputil/header"
+	"github.com/kelseyhightower/envconfig"
+	"github.com/mattn/go-colorable"
+	log "github.com/sirupsen/logrus"
+	"github.com/snowzach/rotatefilehook"
 )
 
 type SprayingTask struct {
