@@ -14,28 +14,20 @@ import (
 	"github.com/mattn/go-colorable"
 	log "github.com/sirupsen/logrus"
 	"github.com/snowzach/rotatefilehook"
+
+	"trident/pkg/db"
 )
 
-type SprayingTask struct {
-	TargetURL         string
-	CandidatePassword string
-	UserList          []string
-}
-
-type SprayingCampaign struct {
-	CreatedAt time.Time
-	CreatedBy string
-	TaskList  []SprayingTask
-}
-
 type specification struct {
-	LogLocation       string `default:"/var/log/orchestrator"`
-	LogPrefix         string `default:"orchestrator: "`
-	AdminListenerPort int    `default:9999`
+	LogLocation        string `default:"/var/log/orchestrator"`
+	LogPrefix          string `default:"orchestrator: "`
+	AdminListenerPort  int    `default:"9999"`
+	DBConnectionString string `required:"true"`
 }
 
 type Server struct {
 	logger *log.Logger
+	db     db.TridentDB
 }
 
 type malformedRequest struct {
@@ -109,7 +101,7 @@ func decodeJSONBody(w http.ResponseWriter, r *http.Request, dst interface{}) err
 
 func (s *Server) campaignCreate(w http.ResponseWriter, r *http.Request) {
 	s.logger.Info("creating campaign")
-	var c SprayingCampaign
+	var c db.Campaign
 	err := decodeJSONBody(w, r, &c)
 
 	if err != nil {
@@ -128,6 +120,8 @@ func (s *Server) campaignCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c.CreatedAt = time.Now()
+
+	s.db.InsertCampaign(&c)
 
 	fmt.Fprintf(w, "Campaign: %+v", c)
 }
@@ -162,6 +156,7 @@ func initLogger(debug bool, logPath string) *log.Logger {
 		FullTimestamp:   true,
 		TimestampFormat: time.RFC3339Nano,
 	})
+
 	logger.AddHook(rotateFileHook)
 	return logger
 }
@@ -178,6 +173,7 @@ func main() {
 
 	s := &Server{
 		logger: initLogger(true, spec.LogLocation+"/server.log"),
+		db:     db.InitDB(spec.DBConnectionString),
 	}
 
 	adminAPIServer := http.NewServeMux()
