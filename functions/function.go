@@ -9,6 +9,9 @@ import (
 	"git.praetorianlabs.com/mars/trident/functions/events"
 	"git.praetorianlabs.com/mars/trident/functions/nozzle"
 
+	_ "git.praetorianlabs.com/mars/trident/functions/nozzle/okta"
+
+
 	// TODO: rate limit our http client
 	// "golang.org/x/time/rate"
 )
