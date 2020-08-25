@@ -11,13 +11,13 @@ import (
 )
 
 func init() {
-	nozzle.Register("okta", &OktaDriver{})
+	nozzle.Register("okta", OktaDriver{})
 }
 
 type OktaDriver struct{}
 
-func (OktaDriver) New(opts map[string]interface{}) (*nozzle.Nozzle, error) {
-	domain, ok := opts["domain"].(string)
+func (OktaDriver) New(opts map[string]string) (nozzle.Nozzle, error) {
+	domain, ok := opts["domain"]
 	if !ok {
 		return nil, fmt.Errorf("okta nozzle requires 'domain' config parameter")
 	}
