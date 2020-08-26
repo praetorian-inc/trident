@@ -24,7 +24,7 @@ type specification struct {
 
 type Server struct {
 	logger *log.Logger
-	db     db.TridentDB
+	db     *db.TridentDB
 }
 
 func (s *Server) campaignCreate(w http.ResponseWriter, r *http.Request) {
@@ -97,7 +97,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	db, err := db.InitDB(spec.DBConnectionString)
+	db, err := db.New(spec.DBConnectionString)
 	if err != nil {
 		log.Fatal(err)
 	}

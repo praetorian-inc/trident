@@ -27,7 +27,7 @@ type TridentDB struct {
 	db *gorm.DB
 }
 
-func InitDB(connectionString string) (TridentDB, error) {
+func New(connectionString string) (*TridentDB, error) {
 	u, err := url.Parse(connectionString)
 	if err != nil {
 		log.Fatal(err)
@@ -39,7 +39,7 @@ func InitDB(connectionString string) (TridentDB, error) {
 	password, set := u.User.Password()
 
 	if !set {
-		return TridentDB{}, &ConnectionError{Msg: "no password was provided to authenticate to the database."}
+		return nil, &ConnectionError{Msg: "no password was provided to authenticate to the database."}
 	}
 	database := strings.Trim(u.Path, "/")
 
@@ -53,13 +53,13 @@ func InitDB(connectionString string) (TridentDB, error) {
 	s.db, err = gorm.Open(driver, parsedConnectionString)
 	if err != nil {
 		msg := fmt.Sprintf("gorm encountered an error %s", err)
-		return TridentDB{}, &ConnectionError{Msg: msg}
+		return nil, &ConnectionError{Msg: msg}
 	}
 
 	s.db.AutoMigrate(&Campaign{})
 	s.db.AutoMigrate(&Task{})
 
-	return s, nil
+	return &s, nil
 }
 
 func (s *TridentDB) InsertCampaign(campaign *Campaign) (uint, error) {
