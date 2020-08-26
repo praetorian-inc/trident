@@ -15,25 +15,31 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
+type ConnectionError struct {
+	Msg string
+}
+
+func (ce *ConnectionError) Error() string {
+	return fmt.Sprintf("connection error: %s", ce.Msg)
+}
+
 type TridentDB struct {
 	db *gorm.DB
 }
 
-func InitDB(connectionString string) TridentDB {
-	log.Printf("connection string: %s", connectionString)
+func InitDB(connectionString string) (TridentDB, error) {
 	u, err := url.Parse(connectionString)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("%s", u)
 
 	driver := u.Scheme
 	instance := u.Host
 	user := u.User.Username()
 	password, set := u.User.Password()
-	log.Printf("%s", password)
+
 	if !set {
-		log.Fatal("You think you can auth to a database without a password? nice try")
+		return TridentDB{}, &ConnectionError{Msg: "no password was provided to authenticate to the database."}
 	}
 	database := strings.Trim(u.Path, "/")
 
@@ -46,13 +52,14 @@ func InitDB(connectionString string) TridentDB {
 
 	s.db, err = gorm.Open(driver, parsedConnectionString)
 	if err != nil {
-		log.Fatal(err)
+		msg := fmt.Sprintf("gorm encountered an error %s", err)
+		return TridentDB{}, &ConnectionError{Msg: msg}
 	}
 
 	s.db.AutoMigrate(&Campaign{})
 	s.db.AutoMigrate(&Task{})
 
-	return s
+	return s, nil
 }
 
 func (s *TridentDB) InsertCampaign(campaign *Campaign) (uint, error) {
