@@ -1,0 +1,138 @@
+package scheduler
+
+import (
+	"context"
+	"encoding/json"
+	"log"
+	"time"
+
+	"cloud.google.com/go/pubsub"
+	"github.com/go-redis/redis"
+
+	"trident/pkg/db"
+)
+
+const (
+	CacheKey = "tasks"
+)
+
+type Scheduler struct {
+	cache *redis.Client
+	pub   *pubsub.Topic
+	sub   *pubsub.Subscription
+}
+
+type Options struct {
+	ProjectID      string
+	TopicID        string
+	SubscriptionID string
+	RedisURI       string
+	RedisPassword  string
+}
+
+func NewScheduler(opts Options) (*Scheduler, error) {
+	ctx := context.Background()
+	client, err := pubsub.NewClient(ctx, opts.ProjectID)
+	if err != nil {
+		return nil, err
+	}
+
+	sub := client.SubscriptionInProject(opts.SubscriptionID, opts.ProjectID)
+	sub.ReceiveSettings.Synchronous = true
+	sub.ReceiveSettings.MaxOutstandingMessages = 10
+
+	cache := redis.NewClient(&redis.Options{
+		Addr:       opts.RedisURI,
+		Password:   opts.RedisPassword,
+		MaxRetries: 10,
+		DB:         0,
+	})
+	_, err = cache.Ping().Result()
+	if err != nil {
+		return nil, err
+	}
+
+	return &Scheduler{
+		cache: cache,
+		sub:   sub,
+		pub:   client.Topic(opts.TopicID),
+	}, nil
+}
+
+func (s *Scheduler) pushTask(task *db.Task) error {
+	// TODO: do we need per-campaign queues?
+	return s.cache.ZAdd(CacheKey, redis.Z{
+		Score:  float64(task.NotBefore.UnixNano()),
+		Member: task,
+	}).Err()
+}
+
+func (s *Scheduler) popTask(task *db.Task) error {
+	z, err := s.cache.BZPopMin(5*time.Second, CacheKey).Result()
+	if err != nil {
+		return err
+	}
+	return task.UnmarshalBinary([]byte(z.Member.(string)))
+}
+
+func (s *Scheduler) Schedule(campaign db.Campaign) error {
+	t := campaign.NotBefore
+	for _, p := range campaign.Passwords {
+		for _, u := range campaign.Users {
+			// TODO: how do we want to handle error in task insertion?
+			err := s.pushTask(&db.Task{
+				NotBefore: t,
+				NotAfter:  campaign.NotAfter,
+				Username:  u,
+				Password:  p,
+				Provider:  campaign.Provider,
+				// TODO: figure out jsonb -> map[string]string
+				ProviderMetadata: map[string]string{
+					"domain": "dev-634850",
+				},
+			})
+			if err != nil {
+				log.Printf("error in redis push task: %s", err)
+			}
+		}
+		t = t.Add(campaign.ScheduleInterval)
+		if t.After(campaign.NotAfter) {
+			// TODO: should this silently drops tasks that are outside the testing window
+			return nil
+		}
+	}
+	return nil
+}
+
+// ProduceTasks will publish tasks to pub/sub when ready
+func (s *Scheduler) ProduceTasks() {
+	ctx := context.Background()
+	for {
+		var task db.Task
+		err := s.popTask(&task)
+		if err != redis.Nil && err != nil {
+			log.Printf("error in redis pop task: %s", err)
+			continue
+		}
+
+		if task.NotBefore.Sub(time.Now()) > 5*time.Second {
+			// our task was not ready, reschedule it
+			s.pushTask(&task)
+			time.Sleep(1 * time.Second)
+		} else {
+			// our task was ready, run it!
+			b, _ := json.Marshal(task)
+			s.pub.Publish(ctx, &pubsub.Message{
+				Data: b,
+			})
+		}
+	}
+}
+
+// ConsumeResults will stream results from pub/sub and store them in the database
+func (s *Scheduler) ConsumeResults() error {
+	ctx := context.Background()
+	return s.sub.Receive(ctx, func(ctx context.Context, msg *pubsub.Message) {
+		// TODO: take result, put in database
+	})
+}

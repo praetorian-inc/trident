@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/url"
 	"strings"
-	"time"
 
 	// we are importing this so that we can use the cloudsql driver with gorm
 	_ "github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/postgres"
@@ -57,26 +56,10 @@ func New(connectionString string) (*TridentDB, error) {
 	}
 
 	s.db.AutoMigrate(&Campaign{})
-	s.db.AutoMigrate(&Task{})
 
 	return &s, nil
 }
 
-func (s *TridentDB) InsertCampaign(campaign *Campaign) (uint, error) {
-	err := s.db.Create(campaign).Error
-	return campaign.ID, err
-}
-
-func (s *TridentDB) InsertTask(CampaignID uint, TargetUser string, TargetPassword string, NotBefore time.Time, NotAfter time.Time) (uint, error) {
-	task := &Task{
-		CampaignID:     CampaignID,
-		TargetUser:     TargetUser,
-		TargetPassword: TargetPassword,
-		NotBefore:      NotBefore,
-		NotAfter:       NotAfter,
-		Result:         false,
-	}
-
-	err := s.db.Create(task).Error
-	return task.ID, err
+func (s *TridentDB) InsertCampaign(campaign *Campaign) error {
+	return s.db.Create(campaign).Error
 }

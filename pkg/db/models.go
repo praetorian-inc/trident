@@ -38,11 +38,29 @@ type Campaign struct {
 }
 
 type Task struct {
-	gorm.Model
-	CampaignID     uint
-	TargetUser     string
-	TargetPassword string
-	NotBefore      time.Time
-	NotAfter       time.Time
-	Result         bool
+	// NotBefore will prevent execution until this time
+	NotBefore time.Time `json:"not_before"`
+
+	// NotAfter will prevent execution after this time
+	NotAfter time.Time `json:"not_after"`
+
+	// Username is the username at the identity provider
+	Username string `json:"username"`
+
+	// Password is the password to guess against the identity provider
+	Password string `json:"password"`
+
+	// Provider is the name of identity provider, used to look up the right nozzle
+	Provider string `json:"provider"`
+
+	// ProviderMetadata is any required configuration data for the provider
+	ProviderMetadata map[string]string `json:"metadata"`
+}
+
+func (t *Task) MarshalBinary() (data []byte, err error) {
+	return json.Marshal(t)
+}
+
+func (t *Task) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, &t)
 }

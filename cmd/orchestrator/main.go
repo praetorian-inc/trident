@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -13,18 +14,27 @@ import (
 
 	"trident/pkg/db"
 	"trident/pkg/parse"
+	"trident/pkg/scheduler"
 )
 
 type specification struct {
-	LogLocation        string `default:"/var/log/orchestrator"`
-	LogPrefix          string `default:"orchestrator: "`
-	AdminListenerPort  int    `default:"9999"`
-	DBConnectionString string `required:"true"`
+	LogLocation        string `envconfig:"LOG_LOCATION" default:"/var/log/orchestrator"`
+	LogPrefix          string `envconfig:"LOG_PREFIX" default:"orchestrator: "`
+	AdminListenerPort  int    `envconfig:"ADMIN_LISTENING_PORT" default:"9999"`
+	DBConnectionString string `envconfig:"DB_CONNECTION_STRING" required:"true"`
+
+	ProjectID      string `envconfig:"PROJECT_ID" required:"true"`
+	TopicID        string `envconfig:"TOPIC_ID" required:"true"`
+	SubscriptionID string `envconfig:"SUBSCRIPTION_ID" required:"true"`
+
+	RedisURI      string `envconfig:"REDIS_URI" required:"true"`
+	RedisPassword string `envconfig:"REDIS_PASSWORD"`
 }
 
 type Server struct {
 	logger *log.Logger
 	db     *db.TridentDB
+	sch    *scheduler.Scheduler
 }
 
 func (s *Server) campaignCreate(w http.ResponseWriter, r *http.Request) {
@@ -33,8 +43,7 @@ func (s *Server) campaignCreate(w http.ResponseWriter, r *http.Request) {
 
 	err := parse.DecodeJSONBody(w, r, &c)
 	if err != nil {
-		s.logger.Error("there was a json parse error")
-		s.logger.Println(err.Error())
+		s.logger.Errorf("error parsing json: %s", err)
 
 		var mr *parse.MalformedRequest
 
@@ -48,8 +57,14 @@ func (s *Server) campaignCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c.CreatedAt = time.Now()
-	s.db.InsertCampaign(&c)
-	fmt.Fprintf(w, "Campaign: %+v", c)
+	err = s.db.InsertCampaign(&c)
+	if err != nil {
+		s.logger.Errorf("error inserting campaign: %s", err)
+		return
+	}
+	go s.sch.Schedule(c)
+
+	json.NewEncoder(w).Encode(&c)
 }
 
 func initLogger(debug bool, logPath string) *log.Logger {
@@ -102,9 +117,21 @@ func main() {
 		log.Fatal(err)
 	}
 
+	sch, err := scheduler.NewScheduler(scheduler.Options{
+		ProjectID:      spec.ProjectID,
+		TopicID:        spec.TopicID,
+		SubscriptionID: spec.SubscriptionID,
+		RedisURI:       spec.RedisURI,
+		RedisPassword:  spec.RedisPassword,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	s := &Server{
 		logger: initLogger(true, spec.LogLocation+"/server.log"),
 		db:     db,
+		sch:    sch,
 	}
 
 	adminAPIServer := http.NewServeMux()
@@ -113,6 +140,16 @@ func main() {
 	go func() {
 		s.logger.Printf("starting server on port %d", spec.AdminListenerPort)
 		s.logger.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", spec.AdminListenerPort), adminAPIServer))
+	}()
+
+	go func() {
+		s.logger.Printf("starting scheduler task production to %s", spec.TopicID)
+		sch.ProduceTasks()
+	}()
+
+	go func() {
+		s.logger.Printf("starting scheduler result consumption from %s", spec.SubscriptionID)
+		sch.ConsumeResults()
 	}()
 
 	<-finish

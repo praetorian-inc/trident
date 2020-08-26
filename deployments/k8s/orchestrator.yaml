@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orchestrator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: orchestrator
+  template:
+    metadata:
+      labels:
+        app: orchestrator
+    spec:
+      serviceAccountName: orchestrator
+      containers:
+      - name: orchestrator
+        image: gcr.io/trident-test-2020-08-24/orchestrator:0.1
+        env:
+        - name: ADMIN_LISTENING_PORT
+          value: "8000"
+        - name: DB_CONNECTION_STRING
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: connection
+        - name: PROJECT_ID
+          value: trident-test-2020-08-24
+        - name: TOPIC_ID
+          value: credentials
+        - name: SUBSCRIPTION_ID
+          value: orchestrator-results
+        - name: REDIS_URI
+          value: 10.102.242.227:6379
+      - name: cloud-sql-proxy
+        image: gcr.io/cloudsql-docker/gce-proxy:latest
+        command:
+          - "/cloud_sql_proxy"
+          - "-instances=trident-test-2020-08-24:us-central1:campaigns=tcp:5432"
+        securityContext:
+          runAsNonRoot: true
