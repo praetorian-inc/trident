@@ -6,6 +6,9 @@ import (
 	"encoding/json"
 	"log"
 
+	"github.com/kelseyhightower/envconfig"
+	"cloud.google.com/go/pubsub"
+
 	"git.praetorianlabs.com/mars/trident/functions/events"
 	"git.praetorianlabs.com/mars/trident/functions/nozzle"
 
@@ -20,6 +23,28 @@ import (
 // additional information regarding Pub/Sub events.
 type PubSubMessage struct {
 	Data []byte `json:"data"`
+}
+
+type specification struct {
+	ProjectID string `envconfig:"PROJECT_ID"`
+	TopicID string `envconfig:"TOPIC_ID"`
+}
+
+var spec specification
+var pub *pubsub.Topic
+
+func init() {
+    err := envconfig.Process("func", &spec)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+	ctx := context.Background()
+	client, err := pubsub.NewClient(ctx, spec.ProjectID)
+	if err != nil {
+		log.Fatal(err)
+	}
+	pub = client.Topic(spec.TopicID)
 }
 
 // HelloPubSub consumes a Pub/Sub message.
@@ -40,8 +65,15 @@ func HelloPubSub(ctx context.Context, m PubSubMessage) error {
 		return err
 	}
 
-	// TODO send nozzle response to pub/sub topic
-	log.Printf("nozzle response: %+v", res)
+	b, _ := json.Marshal(res)
+	pr := pub.Publish(ctx, &pubsub.Message{
+		Data: b,
+	})
+	// NOTE: this enables us to surface errors, but will block until the publish completes
+	_, err = pr.Get(ctx)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

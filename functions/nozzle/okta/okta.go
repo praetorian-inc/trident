@@ -69,7 +69,7 @@ func (n *OktaNozzle) Login(username, password string) (*events.AuthResponse, err
 			RateLimited: true,
 		}, nil
 	}
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != 200 && resp.StatusCode != 401 {
 		return nil, fmt.Errorf("unhandled status code from okta provider: %d", resp.StatusCode)
 	}
 
