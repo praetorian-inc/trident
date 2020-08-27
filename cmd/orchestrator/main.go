@@ -37,7 +37,7 @@ type Server struct {
 	sch    *scheduler.Scheduler
 }
 
-func (s *Server) campaignCreate(w http.ResponseWriter, r *http.Request) {
+func (s *Server) CampaignHandler(w http.ResponseWriter, r *http.Request) {
 	s.logger.Info("creating campaign")
 	var c db.Campaign
 
@@ -68,6 +68,36 @@ func (s *Server) campaignCreate(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(&c)
 }
+
+func (s *Server) ResultsHandler(w http.ResponseWriter, r *http.Request) {
+	s.logger.Info("retrieving results for query")
+	var q db.Query
+
+	err := parse.DecodeJSONBody(w, r, &q)
+	if err != nil {
+		s.logger.Errorf("error parsing json: %s", err)
+
+		var mr *parse.MalformedRequest
+
+		if errors.As(err, &mr) {
+			http.Error(w, mr.Msg, mr.Status)
+		} else {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
+
+		return
+	}
+
+	results, err := s.db.SelectResults(q)
+	if err != nil {
+		message := fmt.Sprintf("there was an error collecting results from the database: %s", err)
+		http.Error(w, message, http.StatusInternalServerError)
+	}
+
+	json.NewEncoder(w).Encode(&results)
+}
+
+func (s *Server) HealthzHandler(w http.ResponseWriter, r *http.Request) {}
 
 func initLogger(debug bool, logPath string) *log.Logger {
 	logger := log.New()
@@ -145,7 +175,9 @@ func main() {
 	}).Debug("server components successfully created")
 
 	adminAPIServer := http.NewServeMux()
-	adminAPIServer.HandleFunc("/campaign", s.campaignCreate)
+	adminAPIServer.HandleFunc("/healthz", s.HealthzHandler)
+	adminAPIServer.HandleFunc("/campaign", s.CampaignHandler)
+	adminAPIServer.HandleFunc("/results", s.ResultsHandler)
 
 	go func() {
 		s.logger.Printf("starting server on port %d", spec.AdminListenerPort)

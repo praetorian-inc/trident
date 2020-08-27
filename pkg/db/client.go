@@ -26,6 +26,11 @@ type TridentDB struct {
 	db *gorm.DB
 }
 
+type Query struct {
+	ReturnedFields []string
+	Filter         map[string]interface{}
+}
+
 func New(connectionString string) (*TridentDB, error) {
 	u, err := url.Parse(connectionString)
 	if err != nil {
@@ -60,6 +65,21 @@ func New(connectionString string) (*TridentDB, error) {
 	return &s, nil
 }
 
-func (s *TridentDB) InsertCampaign(campaign *Campaign) error {
-	return s.db.Create(campaign).Error
+func (t *TridentDB) InsertCampaign(campaign *Campaign) error {
+	return t.db.Create(campaign).Error
+}
+
+func (t *TridentDB) SelectResults(query Query) ([]Result, error) {
+	var results []Result
+
+	err := t.db.Select(query.ReturnedFields).
+		Where(query.Filter).
+		Order("timestamp DESC").
+		Find(&results).
+		Error
+	if err != nil {
+		return nil, err
+	}
+
+	return results, nil
 }
