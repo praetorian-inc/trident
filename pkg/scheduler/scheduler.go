@@ -113,7 +113,10 @@ func (s *Scheduler) ProduceTasks() {
 	for {
 		var task db.Task
 		err := s.popTask(&task)
-		if err != redis.Nil && err != nil {
+		if err == redis.Nil {
+			continue
+		}
+		if err != nil {
 			log.Printf("error in redis pop task: %s", err)
 			continue
 		}
