@@ -66,6 +66,7 @@ func (s *Server) campaignCreate(w http.ResponseWriter, r *http.Request) {
 
 	go s.sch.Schedule(c)
 
+	w.Header().Add("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(&c)
 }
 

@@ -6,7 +6,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/jinzhu/gorm"
 	"github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/lib/pq"
 )
@@ -25,22 +24,28 @@ func (a *Metadata) Scan(value interface{}) error {
 	return json.Unmarshal(b, &a)
 }
 
-type Campaign struct {
-	gorm.Model
-	CreatedBy        string //take it or leave it really meh
-	NotBefore        time.Time
-	NotAfter         time.Time
-	ScheduleInterval time.Duration
-	Users            pq.StringArray `gorm:"type:varchar(255)[]"`
-	Passwords        pq.StringArray `gorm:"type:varchar(255)[]"`
-	Provider         string
-	ProviderMetadata postgres.Jsonb
+type Model struct {
+	ID        uint       `json:"id" gorm:"primary_key"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
+	DeletedAt *time.Time `json:"deleted_at"`
+}
 
-	Results []Result
+type Campaign struct {
+	Model
+	NotBefore        time.Time      `json:"not_before"`
+	NotAfter         time.Time      `json:"not_after"`
+	ScheduleInterval time.Duration  `json:"schedule_interval"`
+	Users            pq.StringArray `json:"users" gorm:"type:varchar(255)[]"`
+	Passwords        pq.StringArray `json:"passwords" gorm:"type:varchar(255)[]"`
+	Provider         string         `json:"provider"`
+	ProviderMetadata postgres.Jsonb `json:"provider_metadata"`
+
+	Results []Result `json:"results"`
 }
 
 type Result struct {
-	gorm.Model
+	Model
 
 	// CampaignID is used to track the results of the task
 	CampaignID uint `json:"campaign_id"`
