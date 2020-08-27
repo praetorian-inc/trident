@@ -7,12 +7,12 @@ import (
 	"log"
 	"time"
 
-	"cloud.google.com/go/compute/metadata"
 	"cloud.google.com/go/pubsub"
 	"github.com/kelseyhightower/envconfig"
 
 	"git.praetorianlabs.com/mars/trident/functions/events"
 	"git.praetorianlabs.com/mars/trident/functions/nozzle"
+	"git.praetorianlabs.com/mars/trident/functions/util"
 
 	_ "git.praetorianlabs.com/mars/trident/functions/nozzle/okta"
 	// TODO: rate limit our http client
@@ -67,7 +67,7 @@ func HelloPubSub(ctx context.Context, m PubSubMessage) error {
 	}
 
 	// fill in generic AuthResult values
-	res.IP, err = metadata.ExternalIP()
+	res.IP, err = util.ExternalIP()
 	if err != nil {
 		log.Printf("error fetching external IP: %s", err)
 	}
