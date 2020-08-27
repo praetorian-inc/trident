@@ -36,10 +36,10 @@ func New(connectionString string) (*TridentDB, error) {
 	instance := u.Host
 	user := u.User.Username()
 	password, set := u.User.Password()
-
 	if !set {
 		return nil, &ConnectionError{Msg: "no password was provided to authenticate to the database."}
 	}
+
 	database := strings.Trim(u.Path, "/")
 
 	parsedConnectionString := fmt.Sprintf("host=%s user=%s dbname=%s password=%s", instance, user, database, password)

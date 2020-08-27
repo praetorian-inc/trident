@@ -56,12 +56,14 @@ func (s *Server) campaignCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c.CreatedAt = time.Now()
 	err = s.db.InsertCampaign(&c)
 	if err != nil {
-		s.logger.Errorf("error inserting campaign: %s", err)
+		s.logger.WithFields(log.Fields{
+			"campaign": c,
+		}).Errorf("error inserting campaign: %s", err)
 		return
 	}
+
 	go s.sch.Schedule(c)
 
 	json.NewEncoder(w).Encode(&c)
@@ -112,9 +114,13 @@ func main() {
 		log.Fatal(err)
 	}
 
+	logger := initLogger(true, spec.LogLocation+"/server.log")
+
 	db, err := db.New(spec.DBConnectionString)
 	if err != nil {
-		log.Fatal(err)
+		logger.WithFields(log.Fields{
+			"connectionstring": spec.DBConnectionString,
+		}).Fatal(err)
 	}
 
 	sch, err := scheduler.NewScheduler(scheduler.Options{
@@ -129,10 +135,14 @@ func main() {
 	}
 
 	s := &Server{
-		logger: initLogger(true, spec.LogLocation+"/server.log"),
+		logger: logger,
 		db:     db,
 		sch:    sch,
 	}
+
+	s.logger.WithFields(log.Fields{
+		"spec": spec,
+	}).Debug("server components successfully created")
 
 	adminAPIServer := http.NewServeMux()
 	adminAPIServer.HandleFunc("/campaign", s.campaignCreate)
