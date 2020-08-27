@@ -1,11 +1,10 @@
 package okta
 
-import(
+import (
 	"testing"
 
 	"git.praetorianlabs.com/mars/trident/functions/nozzle"
 )
-
 
 func TestNozzleOpen(t *testing.T) {
 	_, err := nozzle.Open("okta", map[string]string{

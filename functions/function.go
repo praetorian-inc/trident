@@ -5,16 +5,16 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"time"
 
-	"github.com/kelseyhightower/envconfig"
+	"cloud.google.com/go/compute/metadata"
 	"cloud.google.com/go/pubsub"
+	"github.com/kelseyhightower/envconfig"
 
 	"git.praetorianlabs.com/mars/trident/functions/events"
 	"git.praetorianlabs.com/mars/trident/functions/nozzle"
 
 	_ "git.praetorianlabs.com/mars/trident/functions/nozzle/okta"
-
-
 	// TODO: rate limit our http client
 	// "golang.org/x/time/rate"
 )
@@ -27,17 +27,17 @@ type PubSubMessage struct {
 
 type specification struct {
 	ProjectID string `envconfig:"PROJECT_ID"`
-	TopicID string `envconfig:"TOPIC_ID"`
+	TopicID   string `envconfig:"TOPIC_ID"`
 }
 
 var spec specification
 var pub *pubsub.Topic
 
 func init() {
-    err := envconfig.Process("func", &spec)
-    if err != nil {
-        log.Fatal(err)
-    }
+	err := envconfig.Process("func", &spec)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	ctx := context.Background()
 	client, err := pubsub.NewClient(ctx, spec.ProjectID)
@@ -60,10 +60,21 @@ func HelloPubSub(ctx context.Context, m PubSubMessage) error {
 		return err
 	}
 
+	ts := time.Now()
 	res, err := noz.Login(req.Username, req.Password)
 	if err != nil {
 		return err
 	}
+
+	// fill in generic AuthResult values
+	res.IP, err = metadata.ExternalIP()
+	if err != nil {
+		log.Printf("error fetching external IP: %s", err)
+	}
+	res.CampaignID = req.CampaignID
+	res.Username = req.Username
+	res.Password = req.Password
+	res.Timestamp = ts
 
 	b, _ := json.Marshal(res)
 	pr := pub.Publish(ctx, &pubsub.Message{
