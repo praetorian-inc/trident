@@ -32,6 +32,7 @@ type specification struct {
 
 var spec specification
 var pub *pubsub.Topic
+var externalIP string
 
 func init() {
 	err := envconfig.Process("func", &spec)
@@ -45,6 +46,11 @@ func init() {
 		log.Fatal(err)
 	}
 	pub = client.Topic(spec.TopicID)
+
+	externalIP, err = util.ExternalIP()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 // HelloPubSub consumes a Pub/Sub message.
@@ -67,14 +73,11 @@ func HelloPubSub(ctx context.Context, m PubSubMessage) error {
 	}
 
 	// fill in generic AuthResult values
-	res.IP, err = util.ExternalIP()
-	if err != nil {
-		log.Printf("error fetching external IP: %s", err)
-	}
 	res.CampaignID = req.CampaignID
 	res.Username = req.Username
 	res.Password = req.Password
 	res.Timestamp = ts
+	res.IP = externalIP
 
 	b, _ := json.Marshal(res)
 	pr := pub.Publish(ctx, &pubsub.Message{

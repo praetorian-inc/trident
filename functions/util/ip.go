@@ -1,30 +1,22 @@
 package util
 
 import (
-	"context"
-	"fmt"
-	"net"
-	"time"
+	"bytes"
+	"io/ioutil"
+	"net/http"
 )
 
 func ExternalIP() (string, error) {
-	r := &net.Resolver{
-		PreferGo: true,
-		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
-			d := net.Dialer{
-				Timeout: time.Second * 3,
-			}
-			return d.DialContext(ctx, "udp", "resolver1.opendns.com:53")
-		},
+	resp, err := http.Get("https://checkip.amazonaws.com")
+	if err != nil {
+		return "", err
 	}
-	ip, err := r.LookupHost(context.Background(), "myip.opendns.com")
+	defer resp.Body.Close()
+
+	buf, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
 
-	if len(ip) == 0 {
-		return "", fmt.Errorf("could not determine external ip")
-	}
-
-	return ip[0], nil
+	return string(bytes.TrimSpace(buf)), nil
 }
