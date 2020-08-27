@@ -6,7 +6,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/lib/pq"
 )
 
@@ -33,13 +32,13 @@ type Model struct {
 
 type Campaign struct {
 	Model
-	NotBefore        time.Time      `json:"not_before"`
-	NotAfter         time.Time      `json:"not_after"`
-	ScheduleInterval time.Duration  `json:"schedule_interval"`
-	Users            pq.StringArray `json:"users" gorm:"type:varchar(255)[]"`
-	Passwords        pq.StringArray `json:"passwords" gorm:"type:varchar(255)[]"`
-	Provider         string         `json:"provider"`
-	ProviderMetadata postgres.Jsonb `json:"provider_metadata"`
+	NotBefore        time.Time       `json:"not_before"`
+	NotAfter         time.Time       `json:"not_after"`
+	ScheduleInterval time.Duration   `json:"schedule_interval"`
+	Users            pq.StringArray  `json:"users" gorm:"type:varchar(255)[]"`
+	Passwords        pq.StringArray  `json:"passwords" gorm:"type:varchar(255)[]"`
+	Provider         string          `json:"provider"`
+	ProviderMetadata json.RawMessage `json:"provider_metadata"`
 
 	Results []Result `json:"results"`
 }
@@ -75,7 +74,7 @@ type Result struct {
 	RateLimited bool `json:"rate_limited"`
 
 	// Additional metadata from the auth provider (e.g. information about MFA)
-	Metadata postgres.Jsonb `json:"metadata"`
+	Metadata json.RawMessage `json:"metadata"`
 }
 
 type Task struct {
@@ -95,7 +94,7 @@ type Task struct {
 	Provider string `json:"provider"`
 
 	// ProviderMetadata is any required configuration data for the provider
-	ProviderMetadata map[string]string `json:"metadata"`
+	ProviderMetadata json.RawMessage `json:"metadata"`
 }
 
 func (t *Task) MarshalBinary() (data []byte, err error) {

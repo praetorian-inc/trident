@@ -90,9 +90,7 @@ func (s *Scheduler) Schedule(campaign db.Campaign) error {
 				Password:  p,
 				Provider:  campaign.Provider,
 				// TODO: figure out jsonb -> map[string]string
-				ProviderMetadata: map[string]string{
-					"domain": "dev-634850",
-				},
+				ProviderMetadata: campaign.ProviderMetadata,
 			})
 			if err != nil {
 				log.Printf("error in redis push task: %s", err)
