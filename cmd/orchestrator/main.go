@@ -66,6 +66,7 @@ func (s *Server) CampaignHandler(w http.ResponseWriter, r *http.Request) {
 
 	go s.sch.Schedule(c)
 
+	w.Header().Add("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(&c)
 }
 
@@ -154,6 +155,7 @@ func main() {
 	}
 
 	sch, err := scheduler.NewScheduler(scheduler.Options{
+		Database:       db,
 		ProjectID:      spec.ProjectID,
 		TopicID:        spec.TopicID,
 		SubscriptionID: spec.SubscriptionID,

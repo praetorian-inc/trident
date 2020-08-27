@@ -6,12 +6,8 @@ import (
 	"net/url"
 	"strings"
 
-	// we are importing this so that we can use the cloudsql driver with gorm
-	_ "github.com/GoogleCloudPlatform/cloudsql-proxy/proxy/dialers/postgres"
 	"github.com/jinzhu/gorm"
-
-	// also importing this one so we can use the postgres dialer
-	_ "github.com/jinzhu/gorm/dialects/postgres"
+	_ "github.com/lib/pq"
 )
 
 type ConnectionError struct {
@@ -61,6 +57,7 @@ func New(connectionString string) (*TridentDB, error) {
 	}
 
 	s.db.AutoMigrate(&Campaign{})
+	s.db.AutoMigrate(&Result{})
 
 	return &s, nil
 }
@@ -82,4 +79,8 @@ func (t *TridentDB) SelectResults(query Query) ([]Result, error) {
 	}
 
 	return results, nil
+}
+
+func (s *TridentDB) InsertResult(res *Result) error {
+	return s.db.Create(res).Error
 }

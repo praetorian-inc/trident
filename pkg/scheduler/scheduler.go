@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/pubsub"
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v7"
 
 	"trident/pkg/db"
 )
@@ -17,12 +17,14 @@ const (
 )
 
 type Scheduler struct {
+	db    *db.TridentDB
 	cache *redis.Client
 	pub   *pubsub.Topic
 	sub   *pubsub.Subscription
 }
 
 type Options struct {
+	Database       *db.TridentDB
 	ProjectID      string
 	TopicID        string
 	SubscriptionID string
@@ -53,6 +55,7 @@ func NewScheduler(opts Options) (*Scheduler, error) {
 	}
 
 	return &Scheduler{
+		db:    opts.Database,
 		cache: cache,
 		sub:   sub,
 		pub:   client.Topic(opts.TopicID),
@@ -61,7 +64,7 @@ func NewScheduler(opts Options) (*Scheduler, error) {
 
 func (s *Scheduler) pushTask(task *db.Task) error {
 	// TODO: do we need per-campaign queues?
-	return s.cache.ZAdd(CacheKey, redis.Z{
+	return s.cache.ZAdd(CacheKey, &redis.Z{
 		Score:  float64(task.NotBefore.UnixNano()),
 		Member: task,
 	}).Err()
@@ -110,7 +113,10 @@ func (s *Scheduler) ProduceTasks() {
 	for {
 		var task db.Task
 		err := s.popTask(&task)
-		if err != redis.Nil && err != nil {
+		if err == redis.Nil {
+			continue
+		}
+		if err != nil {
 			log.Printf("error in redis pop task: %s", err)
 			continue
 		}
@@ -133,6 +139,22 @@ func (s *Scheduler) ProduceTasks() {
 func (s *Scheduler) ConsumeResults() error {
 	ctx := context.Background()
 	return s.sub.Receive(ctx, func(ctx context.Context, msg *pubsub.Message) {
-		// TODO: take result, put in database
+		var res db.Result
+		err := json.Unmarshal(msg.Data, &res)
+		if err != nil {
+			log.Printf("error unmarshaling: %s", err)
+			msg.Nack()
+			return
+		}
+
+		err = s.db.InsertResult(&res)
+		if err != nil {
+			log.Printf("error inserting record: %s", err)
+			msg.Nack()
+			return
+		}
+
+		// ACK only if everything else succeeded
+		msg.Ack()
 	})
 }
