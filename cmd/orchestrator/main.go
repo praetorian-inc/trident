@@ -124,6 +124,7 @@ func main() {
 	}
 
 	sch, err := scheduler.NewScheduler(scheduler.Options{
+		Database:       db,
 		ProjectID:      spec.ProjectID,
 		TopicID:        spec.TopicID,
 		SubscriptionID: spec.SubscriptionID,

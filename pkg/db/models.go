@@ -35,12 +35,13 @@ type Campaign struct {
 	Passwords        pq.StringArray `gorm:"type:varchar(255)[]"`
 	Provider         string
 	ProviderMetadata postgres.Jsonb
+
+	Results []Result
 }
 
 type Result struct {
 	gorm.Model
 
-	// TODO: will this link properly in gorm to the campaign object?
 	// CampaignID is used to track the results of the task
 	CampaignID uint `json:"campaign_id"`
 
@@ -68,9 +69,8 @@ type Result struct {
 	// RateLimited indicates the provider has detected a large number of requests
 	RateLimited bool `json:"rate_limited"`
 
-	// TODO: does this need to be postgres.Jsonb?
 	// Additional metadata from the auth provider (e.g. information about MFA)
-	Metadata map[string]interface{} `json:"metadata"`
+	Metadata postgres.Jsonb `json:"metadata"`
 }
 
 type Task struct {

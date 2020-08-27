@@ -17,12 +17,14 @@ const (
 )
 
 type Scheduler struct {
+	db    *db.TridentDB
 	cache *redis.Client
 	pub   *pubsub.Topic
 	sub   *pubsub.Subscription
 }
 
 type Options struct {
+	Database       *db.TridentDB
 	ProjectID      string
 	TopicID        string
 	SubscriptionID string
@@ -53,6 +55,7 @@ func NewScheduler(opts Options) (*Scheduler, error) {
 	}
 
 	return &Scheduler{
+		db:    opts.Database,
 		cache: cache,
 		sub:   sub,
 		pub:   client.Topic(opts.TopicID),
@@ -133,6 +136,22 @@ func (s *Scheduler) ProduceTasks() {
 func (s *Scheduler) ConsumeResults() error {
 	ctx := context.Background()
 	return s.sub.Receive(ctx, func(ctx context.Context, msg *pubsub.Message) {
-		// TODO: take result, put in database
+		var res db.Result
+		err := json.Unmarshal(msg.Data, &res)
+		if err != nil {
+			log.Printf("error unmarshaling: %s", err)
+			msg.Nack()
+			return
+		}
+
+		err = s.db.InsertResult(&res)
+		if err != nil {
+			log.Printf("error inserting record: %s", err)
+			msg.Nack()
+			return
+		}
+
+		// ACK only if everything else succeeded
+		msg.Ack()
 	})
 }

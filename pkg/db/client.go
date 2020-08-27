@@ -52,10 +52,15 @@ func New(connectionString string) (*TridentDB, error) {
 	}
 
 	s.db.AutoMigrate(&Campaign{})
+	s.db.AutoMigrate(&Result{})
 
 	return &s, nil
 }
 
 func (s *TridentDB) InsertCampaign(campaign *Campaign) error {
 	return s.db.Create(campaign).Error
+}
+
+func (s *TridentDB) InsertResult(res *Result) error {
+	return s.db.Create(res).Error
 }
