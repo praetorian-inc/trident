@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/pubsub"
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v7"
 
 	"trident/pkg/db"
 )
@@ -61,7 +61,7 @@ func NewScheduler(opts Options) (*Scheduler, error) {
 
 func (s *Scheduler) pushTask(task *db.Task) error {
 	// TODO: do we need per-campaign queues?
-	return s.cache.ZAdd(CacheKey, redis.Z{
+	return s.cache.ZAdd(CacheKey, &redis.Z{
 		Score:  float64(task.NotBefore.UnixNano()),
 		Member: task,
 	}).Err()

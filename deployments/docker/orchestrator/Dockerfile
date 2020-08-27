@@ -3,8 +3,8 @@ WORKDIR /app
 ADD go.* ./
 RUN go mod download
 ADD . .
-RUN go build ./cmd/orchestrator
+RUN CGO_ENABLED=0 go build -trimpath ./cmd/orchestrator
 
-FROM golang
+FROM alpine
 COPY --from=build /app/orchestrator /bin/
 ENTRYPOINT ["/bin/orchestrator"]
