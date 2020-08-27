@@ -43,7 +43,7 @@ type AuthResponse struct {
 	// Locked will be true iff the account is known to be locked
 	Locked bool `json:"locked"`
 
-	// MFA will be true iff the account requires MFA to log in
+	// MFA will be true iff the account is known to require MFA to log in
 	MFA bool `json:"mfa"`
 
 	// RateLimited indicates the provider has detected a large number of requests

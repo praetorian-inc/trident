@@ -81,6 +81,7 @@ func (n *OktaNozzle) Login(username, password string) (*events.AuthResponse, err
 
 	return &events.AuthResponse{
 		Valid:    res.Status == "SUCCESS" || res.Factor == "SUCCESS",
+		MFA:      res.Factor == "SUCCESS",
 		Locked:   res.Status == "LOCKED_OUT",
 		Metadata: res.Embedded,
 	}, nil
