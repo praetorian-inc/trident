@@ -10,12 +10,11 @@ import (
 	_ "github.com/lib/pq"
 )
 
-type ConnectionError struct {
-	Msg string
-}
+type Datastore interface {
+	InsertCampaign(*Campaign) error
 
-func (ce *ConnectionError) Error() string {
-	return fmt.Sprintf("connection error: %s", ce.Msg)
+	SelectResults(Query) ([]Result, error)
+	InsertResult(*Result) error
 }
 
 type TridentDB struct {
@@ -25,6 +24,14 @@ type TridentDB struct {
 type Query struct {
 	ReturnedFields []string
 	Filter         map[string]interface{}
+}
+
+type ConnectionError struct {
+	Msg string
+}
+
+func (ce *ConnectionError) Error() string {
+	return fmt.Sprintf("connection error: %s", ce.Msg)
 }
 
 func New(connectionString string) (*TridentDB, error) {

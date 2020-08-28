@@ -16,7 +16,13 @@ const (
 	CacheKey = "tasks"
 )
 
-type Scheduler struct {
+type Scheduler interface {
+	Schedule(db.Campaign) error
+	ProduceTasks()
+	ConsumeResults() error
+}
+
+type PubSubScheduler struct {
 	db    *db.TridentDB
 	cache *redis.Client
 	pub   *pubsub.Topic
@@ -32,7 +38,7 @@ type Options struct {
 	RedisPassword  string
 }
 
-func NewScheduler(opts Options) (*Scheduler, error) {
+func NewPubSubScheduler(opts Options) (*PubSubScheduler, error) {
 	ctx := context.Background()
 	client, err := pubsub.NewClient(ctx, opts.ProjectID)
 	if err != nil {
@@ -54,7 +60,7 @@ func NewScheduler(opts Options) (*Scheduler, error) {
 		return nil, err
 	}
 
-	return &Scheduler{
+	return &PubSubScheduler{
 		db:    opts.Database,
 		cache: cache,
 		sub:   sub,
@@ -62,7 +68,7 @@ func NewScheduler(opts Options) (*Scheduler, error) {
 	}, nil
 }
 
-func (s *Scheduler) pushTask(task *db.Task) error {
+func (s *PubSubScheduler) pushTask(task *db.Task) error {
 	// TODO: do we need per-campaign queues?
 	return s.cache.ZAdd(CacheKey, &redis.Z{
 		Score:  float64(task.NotBefore.UnixNano()),
@@ -70,7 +76,7 @@ func (s *Scheduler) pushTask(task *db.Task) error {
 	}).Err()
 }
 
-func (s *Scheduler) popTask(task *db.Task) error {
+func (s *PubSubScheduler) popTask(task *db.Task) error {
 	z, err := s.cache.BZPopMin(5*time.Second, CacheKey).Result()
 	if err != nil {
 		return err
@@ -78,7 +84,7 @@ func (s *Scheduler) popTask(task *db.Task) error {
 	return task.UnmarshalBinary([]byte(z.Member.(string)))
 }
 
-func (s *Scheduler) Schedule(campaign db.Campaign) error {
+func (s *PubSubScheduler) Schedule(campaign db.Campaign) error {
 	t := campaign.NotBefore
 	for _, p := range campaign.Passwords {
 		for _, u := range campaign.Users {
@@ -108,7 +114,7 @@ func (s *Scheduler) Schedule(campaign db.Campaign) error {
 }
 
 // ProduceTasks will publish tasks to pub/sub when ready
-func (s *Scheduler) ProduceTasks() {
+func (s *PubSubScheduler) ProduceTasks() {
 	ctx := context.Background()
 	for {
 		var task db.Task
@@ -136,7 +142,7 @@ func (s *Scheduler) ProduceTasks() {
 }
 
 // ConsumeResults will stream results from pub/sub and store them in the database
-func (s *Scheduler) ConsumeResults() error {
+func (s *PubSubScheduler) ConsumeResults() error {
 	ctx := context.Background()
 	return s.sub.Receive(ctx, func(ctx context.Context, msg *pubsub.Message) {
 		var res db.Result
