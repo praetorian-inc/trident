@@ -64,25 +64,31 @@ func (n *OktaNozzle) Login(username, password string) (*events.AuthResponse, err
 	if err != nil {
 		return nil, err
 	}
-	if resp.StatusCode == 429 {
+
+	switch resp.StatusCode {
+	case 200:
+		var res OktaAuthResponse
+		err = json.NewDecoder(resp.Body).Decode(&res)
+		if err != nil {
+			return nil, err
+		}
+
+		return &events.AuthResponse{
+			Valid:    res.Status != "LOCKED_OUT",
+			MFA:      res.Status == "MFA_REQUIRED",
+			Locked:   res.Status == "LOCKED_OUT",
+			Metadata: res.Embedded,
+		}, nil
+	case 401:
+		return &events.AuthResponse{
+			Valid: false,
+		}, nil
+	case 429:
 		return &events.AuthResponse{
 			RateLimited: true,
 		}, nil
 	}
-	if resp.StatusCode != 200 && resp.StatusCode != 401 {
-		return nil, fmt.Errorf("unhandled status code from okta provider: %d", resp.StatusCode)
-	}
 
-	var res OktaAuthResponse
-	err = json.NewDecoder(resp.Body).Decode(&res)
-	if err != nil {
-		return nil, err
-	}
+	return nil, fmt.Errorf("unhandled status code from okta provider: %d", resp.StatusCode)
 
-	return &events.AuthResponse{
-		Valid:    res.Status == "SUCCESS" || res.Factor == "SUCCESS",
-		MFA:      res.Factor == "SUCCESS",
-		Locked:   res.Status == "LOCKED_OUT",
-		Metadata: res.Embedded,
-	}, nil
 }
