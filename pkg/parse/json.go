@@ -30,7 +30,7 @@ func DecodeJSONBody(w http.ResponseWriter, r *http.Request, dst interface{}) err
 		}
 	}
 
-    // TODO: determine maximum acceptable body size
+	// TODO: determine maximum acceptable body size
 	// r.Body = http.MaxBytesReader(w, r.Body, 1048576)
 
 	dec := json.NewDecoder(r.Body)

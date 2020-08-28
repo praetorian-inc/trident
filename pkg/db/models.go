@@ -78,6 +78,9 @@ type Result struct {
 }
 
 type Task struct {
+	// CampaignID is used to track the results of the task
+	CampaignID uint `json:"campaign_id"`
+
 	// NotBefore will prevent execution until this time
 	NotBefore time.Time `json:"not_before"`
 
