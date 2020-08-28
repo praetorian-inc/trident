@@ -90,15 +90,14 @@ func (s *PubSubScheduler) Schedule(campaign db.Campaign) error {
 		for _, u := range campaign.Users {
 			// TODO: how do we want to handle error in task insertion?
 			err := s.pushTask(&db.Task{
-				NotBefore: t,
-				NotAfter:  campaign.NotAfter,
-				Username:  u,
-				Password:  p,
-				Provider:  campaign.Provider,
+				CampaignID: campaign.ID,
+				NotBefore:  t,
+				NotAfter:   campaign.NotAfter,
+				Username:   u,
+				Password:   p,
+				Provider:   campaign.Provider,
 				// TODO: figure out jsonb -> map[string]string
-				ProviderMetadata: map[string]string{
-					"domain": "dev-634850",
-				},
+				ProviderMetadata: campaign.ProviderMetadata,
 			})
 			if err != nil {
 				log.Printf("error in redis push task: %s", err)
