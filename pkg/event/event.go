@@ -1,4 +1,4 @@
-package events
+package event
 
 import (
 	"time"
@@ -51,4 +51,24 @@ type AuthResponse struct {
 
 	// Additional metadata from the auth provider (e.g. information about MFA)
 	Metadata map[string]interface{} `json:"metadata"`
+}
+
+type ErrorResponse struct {
+	// CampaignID is used to track the results of the task
+	CampaignID uint `json:"campaign_id"`
+
+	// IP is the originating IP of the credential guess
+	IP string `json:"ip"`
+
+	// Timestamp is the time that we made the request
+	Timestamp time.Time `json:"timestamp"`
+
+	// Username is the username at the identity provider
+	Username string `json:"username"`
+
+	// Password is the password to guess against the identity provider
+	Password string `json:"password"`
+
+	// Error is a string representation of an error from the worker
+	Error string `json:"error"`
 }

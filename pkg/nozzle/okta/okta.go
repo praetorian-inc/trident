@@ -6,15 +6,15 @@ import (
 	"fmt"
 	"net/http"
 
-	"git.praetorianlabs.com/mars/trident/functions/events"
-	"git.praetorianlabs.com/mars/trident/functions/nozzle"
+	"trident/pkg/event"
+	"trident/pkg/nozzle"
 )
+
+type OktaDriver struct{}
 
 func init() {
 	nozzle.Register("okta", OktaDriver{})
 }
-
-type OktaDriver struct{}
 
 func (OktaDriver) New(opts map[string]string) (nozzle.Nozzle, error) {
 	domain, ok := opts["domain"]
@@ -42,13 +42,7 @@ type OktaAuthResponse struct {
 	Embedded map[string]interface{} `json:"_embedded"`
 }
 
-func NewOktaNozzle(domain string) nozzle.Nozzle {
-	return &OktaNozzle{
-		Domain: domain,
-	}
-}
-
-func (n *OktaNozzle) Login(username, password string) (*events.AuthResponse, error) {
+func (n *OktaNozzle) Login(username, password string) (*event.AuthResponse, error) {
 	url := fmt.Sprintf("https://%s.okta.com/api/v1/authn", n.Domain)
 	data, _ := json.Marshal(map[string]string{
 		"username": username,
@@ -73,18 +67,18 @@ func (n *OktaNozzle) Login(username, password string) (*events.AuthResponse, err
 			return nil, err
 		}
 
-		return &events.AuthResponse{
+		return &event.AuthResponse{
 			Valid:    res.Status != "LOCKED_OUT",
 			MFA:      res.Status == "MFA_REQUIRED",
 			Locked:   res.Status == "LOCKED_OUT",
 			Metadata: res.Embedded,
 		}, nil
 	case 401:
-		return &events.AuthResponse{
+		return &event.AuthResponse{
 			Valid: false,
 		}, nil
 	case 429:
-		return &events.AuthResponse{
+		return &event.AuthResponse{
 			RateLimited: true,
 		}, nil
 	}

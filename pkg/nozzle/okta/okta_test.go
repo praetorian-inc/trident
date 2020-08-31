@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"git.praetorianlabs.com/mars/trident/functions/nozzle"
+	"trident/pkg/nozzle"
 )
 
 func TestMain(m *testing.M) {
