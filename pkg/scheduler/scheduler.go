@@ -143,6 +143,7 @@ func (s *PubSubScheduler) ProduceTasks() {
 // ConsumeResults will stream results from pub/sub and store them in the database
 func (s *PubSubScheduler) ConsumeResults() error {
 	ctx := context.Background()
+	results := s.db.StreamingInsertResults()
 	return s.sub.Receive(ctx, func(ctx context.Context, msg *pubsub.Message) {
 		var res db.Result
 		err := json.Unmarshal(msg.Data, &res)
@@ -152,11 +153,10 @@ func (s *PubSubScheduler) ConsumeResults() error {
 			return
 		}
 
-		err = s.db.InsertResult(&res)
-		if err != nil {
-			log.Printf("error inserting record: %s", err)
-			msg.Nack()
-			return
+		if res.Valid {
+			s.db.InsertResult(&res)
+		} else {
+			results <- &res
 		}
 
 		// ACK only if everything else succeeded
