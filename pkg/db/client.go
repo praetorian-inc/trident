@@ -5,9 +5,10 @@ import (
 	"log"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/jinzhu/gorm"
-	_ "github.com/lib/pq"
+	"github.com/lib/pq"
 )
 
 type Datastore interface {
@@ -90,4 +91,86 @@ func (t *TridentDB) SelectResults(query Query) ([]Result, error) {
 
 func (s *TridentDB) InsertResult(res *Result) error {
 	return s.db.Create(res).Error
+}
+
+const (
+	StreamingInsertTimeout = 3 * time.Second
+	StreamingInsertMax     = 5000
+)
+
+func (s *TridentDB) StreamingInsertResults() chan *Result {
+	results := make(chan *Result, StreamingInsertMax)
+	go func() {
+		for {
+			txn, err := s.db.DB().Begin()
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			stmt, err := txn.Prepare(pq.CopyIn("results",
+				"campaign_id", "ip", "timestamp", "username", "password",
+				"valid", "locked", "mfa", "rate_limited", "metadata",
+			))
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			execres := func(r *Result) {
+				_, err = stmt.Exec(
+					r.CampaignID, r.IP, r.Timestamp, r.Username, r.Password,
+					r.Valid, r.Locked, r.MFA, r.RateLimited, r.Metadata,
+				)
+				if err != nil {
+					log.Printf("error in streaming exec: %s", err)
+					results <- r
+				}
+			}
+
+			// 1st iter: block until we read a single result
+			// Nth iter: attempt to Exec a result, but allow timeout
+			//  At most, we will write StreamingInsertMax records at a time
+			//  within StreamingInsertTimeout seconds
+			execres(<-results)
+
+			count := 1
+			timer := time.NewTimer(StreamingInsertTimeout)
+			for {
+				select {
+				case r := <-results:
+					execres(r)
+
+					count += 1
+					if count > StreamingInsertMax {
+						goto commit
+					}
+				case <-timer.C:
+					goto commit
+				}
+
+				if !timer.Stop() {
+					<-timer.C
+				}
+				timer.Reset(StreamingInsertTimeout)
+			}
+
+		commit:
+			log.Printf("streaming %d records to db", count)
+
+			_, err = stmt.Exec()
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			err = stmt.Close()
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			err = txn.Commit()
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+	}()
+	return results
 }
