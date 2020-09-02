@@ -114,11 +114,11 @@ func campaignCreate(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	argoToken := creds.Token
-
-	fmt.Printf("token: %s", argoToken)
-
-	req.Header.Add("cf-access-token", argoToken)
+	err = authenticator.Auth(req)
+	if err != nil {
+		fmt.Printf("%v", err)
+		os.Exit(1)
+	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {

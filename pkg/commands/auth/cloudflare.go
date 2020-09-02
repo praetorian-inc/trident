@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"net/http"
 	"net/url"
 
 	"github.com/cloudflare/cloudflared/cmd/cloudflared/token"
@@ -8,17 +9,21 @@ import (
 )
 
 type Authenticator interface {
-	Auth() error
+	Auth(*http.Request) error
 }
 
 type ArgoAuthenticator struct {
-	Token string
-	URL   *url.URL
+	URL *url.URL
 }
 
-func (a *ArgoAuthenticator) Auth() error {
+func (a *ArgoAuthenticator) Auth(req *http.Request) error {
 	logger, err := logger.New()
 	token, err := token.FetchToken(a.URL, logger)
-	a.Token = token
-	return err
+	if err != nil {
+		return err
+	}
+
+	req.Header.Add("cf-access-token", token)
+
+	return nil
 }

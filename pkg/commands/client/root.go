@@ -11,10 +11,7 @@ import (
 	"trident/pkg/commands/auth"
 )
 
-var cfgFile string
-
-//TODO(dallas): see what up about making this an interface type
-var creds = &auth.ArgoAuthenticator{}
+var authenticator auth.Authenticator
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -50,23 +47,12 @@ func init() {
 		os.Exit(1)
 	}
 
-	creds = &auth.ArgoAuthenticator{
-		Token: "",
-		URL:   url,
-	}
-
-	if err := creds.Auth(); err != nil {
-		fmt.Printf("error authenticating: %v", err)
-		os.Exit(1)
+	authenticator = &auth.ArgoAuthenticator{
+		URL: url,
 	}
 }
 
 func Execute() {
-	if err := creds.Auth(); err != nil {
-		fmt.Printf("error authenticating: %v", err)
-		os.Exit(1)
-	}
-
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
