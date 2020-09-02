@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	"git.praetorianlabs.com/mars/trident/functions/events"
+	"trident/pkg/event"
 )
 
 var (
@@ -17,7 +17,7 @@ type Driver interface {
 }
 
 type Nozzle interface {
-	Login(username, password string) (*events.AuthResponse, error)
+	Login(username, password string) (*event.AuthResponse, error)
 }
 
 func Open(name string, opts map[string]string) (Nozzle, error) {

@@ -13,5 +13,6 @@ require (
 	github.com/lib/pq v1.8.0
 	github.com/pquerna/cachecontrol v0.0.0-20200819021114-67c6ae64274f // indirect
 	github.com/sirupsen/logrus v1.6.0
+	golang.org/x/sys v0.0.0-20200602225109-6fdc65e7d980 // indirect
 	gopkg.in/square/go-jose.v2 v2.5.1 // indirect
 )
