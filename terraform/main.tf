@@ -35,6 +35,21 @@ resource "google_project_service" "services" {
   disable_on_destroy = false
 }
 
+module "backend_networking" {
+  source = "./modules/vpc-networking"
+}
+
+module "cloud-sql-db" {
+  source = "./modules/cloud-sql"
+
+  database_instance_name = var.project
+  private_network_id = module.backend_networking.private_network_id
+
+  depends_on = [
+    module.backend_networking
+  ]
+}
+
 module "gke_cluster" {
   # When using these modules in your own templates, you will need to use a Git
   # URL with a ref attribute that pins you to a specific version of the modules,
