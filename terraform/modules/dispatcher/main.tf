@@ -34,13 +34,13 @@ resource "google_service_account_iam_member" "workload-identity" {
 resource "google_pubsub_topic_iam_member" "server-topic" {
   topic  = var.pubsub_topic
   role   = "roles/pubsub.publisher"
-  member = "serviceAccount:${google_service_account.server.id}"
+  member = "serviceAccount:${google_service_account.server.email}"
 }
 
-resource "google_pubsub_subscription_iam_member" "server-subcription" {
+resource "google_pubsub_subscription_iam_member" "server-subscription" {
   subscription = var.pubsub_subscription
   role         = "roles/pubsub.subscriber"
-  member       = "serviceAccount:${google_service_account.server.id}"
+  member       = "serviceAccount:${google_service_account.server.email}"
 }
 
 resource "kubernetes_service_account" "server" {
@@ -48,7 +48,7 @@ resource "kubernetes_service_account" "server" {
     namespace   = var.namespace
     name        = local.name
     annotations = {
-      "iam.gke.io/gcp-service-account" = google_service_account.server.id
+      "iam.gke.io/gcp-service-account" = google_service_account.server.email
     }
   }
 }
