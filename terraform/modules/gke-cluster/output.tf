@@ -4,6 +4,11 @@ output "name" {
   value       = google_container_cluster.cluster.name
 }
 
+output "node_pool" {
+  description = "The id of the node pool. This output is used for interpolation with other modules."
+  value       = google_container_node_pool.default.id
+}
+
 output "endpoint" {
   description = "The IP address of the cluster master."
   sensitive   = true

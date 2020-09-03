@@ -8,6 +8,11 @@ variable "project" {
   type        = string
 }
 
+variable "namespace" {
+  description = "The Kubernetes namespace for deployment"
+  type        = string
+}
+
 variable "pubsub_topic" {
   description = "The name of the PubSub topic to publish results to"
   type        = string
@@ -32,12 +37,6 @@ variable "worker_token" {
 # OPTIONAL PARAMETERS
 # Generally, these values won't need to be changed.
 # -----------------------------------------------------------------------------
-
-variable "namespace" {
-  description = "The Kubernetes namespace for deployment"
-  type        = string
-  default     = "trident"
-}
 
 variable "image" {
   description = "The container image to deploy"

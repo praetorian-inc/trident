@@ -42,7 +42,7 @@ module "gke_cluster" {
   # source = "github.com/praetorian-inc/trident.git//terraform/modules/gke-cluster?ref=v0.1.0"
   source = "./modules/gke-cluster"
 
-  project  = var.project
+  project  = data.google_project.project.project_id
   location = var.location
   name     = var.cluster_name
 
@@ -65,18 +65,20 @@ resource "kubernetes_namespace" "ns" {
   metadata {
     name = "trident"
   }
+  # force a dependency on the node pool to avoid destroying the ns after the pool
+  depends_on = [module.gke_cluster.node_pool]
 }
 
 module "pubsub" {
   source = "./modules/pubsub"
 
-  project = var.project
+  project = data.google_project.project.project_id
 }
 
 module "worker" {
   source = "./modules/worker"
 
-  project  = var.project
+  project  = data.google_project.project.project_id
   location = var.location
 
   depends_on = [
@@ -87,7 +89,8 @@ module "worker" {
 module "dispatcher" {
   source = "./modules/dispatcher"
 
-  project = var.project
+  project   = data.google_project.project.project_id
+  namespace = kubernetes_namespace.ns.metadata[0].name
 
   pubsub_topic        = module.pubsub.pubsub_topic_results
   pubsub_subscription = module.pubsub.pubsub_subscription_credentials

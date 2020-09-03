@@ -43,8 +43,6 @@ resource "google_container_cluster" "cluster" {
 }
 
 resource "google_container_node_pool" "default" {
-  provider = google-beta
-
   project  = var.project
   location = var.location
 
