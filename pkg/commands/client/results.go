@@ -46,7 +46,7 @@ func init() {
 	resultsCmd.Flags().StringVarP(&flagFilter, "filter", "f", `{"valid":true}`,
         "filter on db results (specified in JSON)")
 
-	resultsCmd.Flags().StringVarP(&flagOutputFormat, "format", "o", "table",
+	resultsCmd.Flags().StringVarP(&flagOutputFormat, "output-format", "o", "table",
         "output format (table, csv, json)")
 	rootCmd.AddCommand(resultsCmd)
 }

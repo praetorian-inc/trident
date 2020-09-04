@@ -50,7 +50,6 @@ func init() {
 
 	campaignCreateCmd.Flags().DurationVarP(&flagScheduleInterval, "interval", "i", time.Second,
         "requests will happen with this interval between them")
-	campaignCreateCmd.MarkFlagRequired("interval")
 
 	campaignCreateCmd.Flags().StringVarP(&flagProvider, "auth-provider", "a", "okta",
         "this is the authentication platform you are attacking")
