@@ -22,7 +22,7 @@ type specification struct {
 	DBConnectionString string `envconfig:"DB_CONNECTION_STRING" required:"true"`
 
 	AuthDomain string `envconfig:"CF_AUTH_DOMAIN"`
-	PolicyAUD string `envconfig:"CF_AUDIENCE"`
+	PolicyAUD  string `envconfig:"CF_AUDIENCE"`
 
 	ProjectID      string `envconfig:"PROJECT_ID" required:"true"`
 	TopicID        string `envconfig:"TOPIC_ID" required:"true"`
@@ -82,7 +82,6 @@ func main() {
 	log.WithFields(log.Fields{
 		"spec": spec,
 	}).Debug("server components successfully created")
-
 
 	r := chi.NewRouter()
 
