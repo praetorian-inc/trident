@@ -1,0 +1,31 @@
+# Documentation on this file structure: https://goreleaser.com
+before:
+  hooks:
+    - go mod download
+builds:
+  -
+    main: ./cmd/trident-client/main.go
+    binary: trident-client
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+archives:
+  - replacements:
+      386: i386
+      amd64: x86_64
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  # skip changelog generation for now
+  skip: true
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+
