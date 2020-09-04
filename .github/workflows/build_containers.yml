@@ -36,18 +36,18 @@ jobs:
     - name: Build to container images
       run: |-
         docker build \
-          --tag "gcr.io/$PROJECT_ID/webhook-worker:$VERSION" \
-          --file deployments/docker/webhook-worker/Dockerfile
+          --tag "gcr.io/$PROJECT_ID/webhook-worker:$VERSION"  \
+          --file deployments/docker/webhook-worker/Dockerfile \
           .
 
         docker build \
-          --tag "gcr.io/$PROJECT_ID/dispatcher:$VERSION" \
-          --file deployments/docker/dispatcher/Dockerfile
+          --tag "gcr.io/$PROJECT_ID/dispatcher:$VERSION"  \
+          --file deployments/docker/dispatcher/Dockerfile \
           .
 
         docker build \
-          --tag "gcr.io/$PROJECT_ID/orchestrator:$VERSION" \
-          --file deployments/docker/orchestrator/Dockerfile
+          --tag "gcr.io/$PROJECT_ID/orchestrator:$VERSION"  \
+          --file deployments/docker/orchestrator/Dockerfile \
           .
 
     - name: Tag version as latest
