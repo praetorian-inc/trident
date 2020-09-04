@@ -4,11 +4,14 @@
 #  > python diagram.py
 from diagrams import Cluster, Diagram, Edge
 from diagrams.gcp.analytics import PubSub
-from diagrams.gcp.compute import Functions
+from diagrams.gcp.compute import Run
 from diagrams.gcp.database import SQL, Memorystore
-from diagrams.k8s.compute import Pod
+from diagrams.gcp.security import IAP
+from diagrams.aws.compute import Lambda
+from diagrams.k8s.compute import Pod, ReplicaSet
 from diagrams.onprem.compute import Server as AuthProvider
 from diagrams.programming.language import Go
+from diagrams.onprem.client import Client
 import os
 
 # find docs/ directory to save png to
@@ -22,38 +25,56 @@ with Diagram("Trident", filename=output, direction="LR", show=False):
     with Cluster("GCP Project"):
 
         with Cluster("Orchestrator"):
-            with Cluster("argo"):
-                api = Pod("api")
+            api = Pod("api")
+            cloudflare = IAP("cloudflared")
 
-            with Cluster("Event Driven"):
-                producer = Pod("producer")
-                consumer = Pod("consumer")
-        
-            db = SQL("db")
-            cache = Memorystore("redis")
+        with Cluster("Eventing"):
+            producer = Pod("producer")
+            consumer = Pod("consumer")
+    
+        db = SQL("db")
+        cache = Memorystore("redis")
+
+        with Cluster("Dispatchers"):
+            dispatcher1 = ReplicaSet("dispatchers")
+            dispatcher2 = ReplicaSet("dispatchers")
+            dispatcher3 = ReplicaSet("dispatchers")
 
         pubsub = PubSub("pubsub")
 
-        go >> api
-        api >> db
-        api >> cache
-        cache >> producer >> Edge(label="credentials", style="dashed") >> pubsub
-        pubsub >> Edge(label="results", style="dashed") >> consumer >> db >> api
+        go >> cloudflare >> api
+        api >> Edge() << db
+        api >> Edge() << cache
+        db >> Edge() << consumer
+        cache >> Edge() << producer
+
+        producer >> Edge(label="credentials") >> pubsub
+        pubsub >> Edge(label="results") >> consumer
+
+        pubsub >> Edge(label="results") << dispatcher1
+        pubsub >> Edge(label="credentials") << dispatcher2
+        pubsub >> Edge(label="results") << dispatcher3
 
     with Cluster("Executors"):
 
-        with Cluster("GCP Functions"):
-            dispatch_gcp = Functions("dispatcher1")
+        with Cluster("Google Cloud Run"):
+            worker_gcp = Run("worker")
 
-        with Cluster("AWS Lambdas"):
-            dispatch_aws = Functions("dispatcher2")
+        with Cluster("AWS Lambda"):
+            worker_aws = Lambda("worker")
+
+        with Cluster("Cobalt Strike"):
+            worker_cs = Client("worker")
     
     with Cluster("Authentication Providers"):
         okta = AuthProvider("okta")
         o365 = AuthProvider("o365")
 
-    pubsub >> Edge(label="credentials", style="dashed") >> dispatch_gcp
-    dispatch_gcp >> Edge(label="results", style="dashed") >> pubsub
+    dispatcher1 >> worker_gcp
+    dispatcher2 >> worker_aws
+    dispatcher3 >> worker_cs
 
-    dispatch_gcp >> okta
-    dispatch_aws >> o365
+    worker_gcp >> okta
+    worker_aws >> o365
+    worker_cs >> o365
+
