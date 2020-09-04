@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/jedib0t/go-pretty/table"
-
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -49,17 +49,14 @@ func resultsGet(cmd *cobra.Command, args []string) {
 
 	filterFile, err := os.Open(flagFilterFile)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		log.Fatalf("error opening filter file: %s", err)
 	}
-
 	defer filterFile.Close()
 
 	byteValue, _ := ioutil.ReadAll(filterFile)
 
 	var filter map[string]interface{}
 	json.Unmarshal([]byte(byteValue), &filter)
-
 	requestBody, err := json.Marshal(map[string]interface{}{
 		"ReturnedFields": fields,
 		"Filter":         filter,
@@ -67,35 +64,30 @@ func resultsGet(cmd *cobra.Command, args []string) {
 
 	req, err := http.NewRequest("POST", orchestrator+"/results", bytes.NewBuffer(requestBody))
 	if err != nil {
-		fmt.Printf("%v", err)
-		os.Exit(1)
+		log.Fatalf("error during request creation: %s", err)
 	}
 
 	err = authenticator.Auth(req)
 	if err != nil {
-		fmt.Printf("%v", err)
-		os.Exit(1)
+		log.Fatalf("error during authentication: %s", err)
 	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		fmt.Printf("%v", err)
-		os.Exit(1)
+		log.Fatalf("error sending request: %s", err)
 	}
 	defer resp.Body.Close()
 
 	respBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Printf("%v", err)
-		os.Exit(1)
+		log.Fatalf("error reading response body: %s", err)
 	}
 
 	var results []db.Result
 
 	err = json.Unmarshal(respBody, &results)
 	if err != nil {
-		fmt.Printf("%v", err)
-		os.Exit(1)
+		log.Fatalf("error parsing response json: %s", err)
 	}
 
 	if flagOutputFormat == "json" {

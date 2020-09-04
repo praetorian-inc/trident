@@ -1,10 +1,9 @@
 package client
 
 import (
-	"fmt"
 	"net/url"
-	"os"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -35,16 +34,14 @@ func init() {
 	// If a config file is found, read it in.
 	err := viper.ReadInConfig()
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		log.Fatalf("error reading config: %s", err)
 	}
 
-	fmt.Println("Using config file:", viper.ConfigFileUsed())
+	log.Infof("Using config file: %s", viper.ConfigFileUsed())
 
 	url, err := url.Parse(viper.GetString("orchestrator-url"))
 	if err != nil {
-		fmt.Printf("error authenticating: %v", err)
-		os.Exit(1)
+		log.Fatalf("error parsing orchestrator url: %s", err)
 	}
 
 	authenticator = &auth.ArgoAuthenticator{
@@ -54,7 +51,6 @@ func init() {
 
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		log.Fatalf("error during command execution: %s", err)
 	}
 }

@@ -4,11 +4,11 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"os"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -17,7 +17,7 @@ var (
 	flagUsernameFile     string
 	flagPasswordFile     string
 	flagNotBefore        string
-	flagNotAfter         string
+	flagActiveWindow     time.Duration
 	flagScheduleInterval int
 	flagProvider         string
 )
@@ -32,17 +32,21 @@ var campaignCreateCmd = &cobra.Command{
 }
 
 func init() {
+	defaultNotBefore := time.Now().Format(time.RFC3339Nano)
+	defaultActiveWindow, err := time.ParseDuration("4w")
+	if err != nil {
+		log.Fatalf("error parsing default active window: %s", err)
+	}
+
 	campaignCreateCmd.Flags().StringVarP(&flagUsernameFile, "userfile", "u", "", "file of usernames (newline separated)")
 	campaignCreateCmd.MarkFlagRequired("userfile")
 
 	campaignCreateCmd.Flags().StringVarP(&flagPasswordFile, "passfile", "p", "", "file of passwords (newline separated)")
 	campaignCreateCmd.MarkFlagRequired("passfile")
 
-	campaignCreateCmd.Flags().StringVarP(&flagNotBefore, "notbefore", "b", "", "requests will not start before this time")
-	campaignCreateCmd.MarkFlagRequired("notbefore")
+	campaignCreateCmd.Flags().StringVarP(&flagNotBefore, "notbefore", "b", defaultNotBefore, "requests will not start before this time")
 
-	campaignCreateCmd.Flags().StringVarP(&flagNotAfter, "notafter", "a", "", "requests will not occur after this time")
-	campaignCreateCmd.MarkFlagRequired("notafter")
+	campaignCreateCmd.Flags().DurationVarP(&flagActiveWindow, "window", "w", defaultActiveWindow, "a duration that this campaign will be active (ex: 4w)")
 
 	campaignCreateCmd.Flags().IntVarP(&flagScheduleInterval, "interval", "i", 0, "requests will happen with this interval between them")
 	campaignCreateCmd.MarkFlagRequired("interval")
@@ -76,27 +80,20 @@ func campaignCreate(cmd *cobra.Command, args []string) {
 
 	users, err := readLines(flagUsernameFile)
 	if err != nil {
-		fmt.Printf("%v", err)
-		os.Exit(1)
+		log.Fatalf("error reading lines from user file: %s", err)
 	}
 
 	passwords, err := readLines(flagPasswordFile)
 	if err != nil {
-		fmt.Printf("%v", err)
-		os.Exit(1)
+		log.Fatalf("error reading lines from password file: %s", err)
 	}
 
 	parsedNotBefore, err := time.Parse(time.RFC3339Nano, flagNotBefore)
 	if err != nil {
-		fmt.Printf("%v", err)
-		os.Exit(1)
+		log.Fatalf("error parsing notBefore time: %s", err)
 	}
 
-	parsedNotAfter, err := time.Parse(time.RFC3339Nano, flagNotAfter)
-	if err != nil {
-		fmt.Printf("%v", err)
-		os.Exit(1)
-	}
+	parsedNotAfter := parsedNotBefore.Add(flagActiveWindow)
 
 	requestBody, err := json.Marshal(map[string]interface{}{
 		"not_before":        parsedNotBefore,
@@ -110,21 +107,19 @@ func campaignCreate(cmd *cobra.Command, args []string) {
 
 	req, err := http.NewRequest("POST", orchestrator+"/campaign", bytes.NewBuffer(requestBody))
 	if err != nil {
-		fmt.Printf("%v", err)
-		os.Exit(1)
+		log.Fatalf("error during request creation: %s", err)
 	}
 
 	err = authenticator.Auth(req)
 	if err != nil {
-		fmt.Printf("%v", err)
-		os.Exit(1)
+		log.Fatalf("error during authentication: %s", err)
 	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		fmt.Printf("%v", err)
-		os.Exit(1)
+		log.Fatalf("error sending request: %s", err)
 	}
 
-	fmt.Printf("response: %v", resp)
+	log.Debug(resp)
+	log.Info("successfully created campaign")
 }
