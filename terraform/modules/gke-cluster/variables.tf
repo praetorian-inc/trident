@@ -29,12 +29,6 @@ variable "network" {
   default     = "default"
 }
 
-variable "subnetwork" {
-  description = "A reference (self link) to the subnetwork to host the cluster in"
-  type        = string
-  default     = "default"
-}
-
 variable "release_channel" {
   description = "The release_channel to use for automatic updates to the cluster"
   type        = string

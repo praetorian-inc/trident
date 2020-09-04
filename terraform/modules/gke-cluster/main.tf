@@ -13,8 +13,7 @@ resource "google_container_cluster" "cluster" {
   initial_node_count       = 1
 
   networking_mode = "VPC_NATIVE"
-  network    = var.network
-  subnetwork = var.subnetwork
+  network         = var.network
 
   ip_allocation_policy {
     cluster_ipv4_cidr_block  = "/16"

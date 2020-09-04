@@ -29,37 +29,51 @@ resource "google_project_service" "services" {
   project = var.project
   for_each = toset([
     "container.googleapis.com",
+    "redis.googleapis.com",
     "run.googleapis.com",
+    "servicenetworking.googleapis.com",
+    "sql-component.googleapis.com",
+    "sqladmin.googleapis.com",
   ])
   service            = each.value
   disable_on_destroy = false
 }
 
 module "backend_networking" {
+  # When using these modules in your own templates, you will need to use a Git
+  # URL with a ref attribute that pins you to a specific version of the modules,
+  # such as the following example:
+  # source = "github.com/praetorian-inc/trident.git//terraform/modules/vpc-networking?ref=v0.1.0"
   source = "./modules/vpc-networking"
-}
-
-module "cloud-sql-db" {
-  source = "./modules/cloud-sql"
-
-  database_instance_name = var.project
-  private_network_id = module.backend_networking.private_network_id
 
   depends_on = [
-    module.backend_networking
+    google_project_service.services["servicenetworking.googleapis.com"],
+  ]
+}
+
+module "cloud_sql" {
+  source = "./modules/cloud-sql"
+
+  project  = data.google_project.project.project_id
+  location = var.location
+
+  private_network_id     = module.backend_networking.private_network_id
+
+  depends_on = [
+    module.backend_networking,
+    google_project_service.services["sql-component.googleapis.com"],
+    google_project_service.services["sqladmin.googleapis.com"],
   ]
 }
 
 module "gke_cluster" {
-  # When using these modules in your own templates, you will need to use a Git
-  # URL with a ref attribute that pins you to a specific version of the modules,
-  # such as the following example:
-  # source = "github.com/praetorian-inc/trident.git//terraform/modules/gke-cluster?ref=v0.1.0"
   source = "./modules/gke-cluster"
 
   project  = data.google_project.project.project_id
   location = var.location
   name     = var.cluster_name
+
+  network  = module.backend_networking.private_network_id
 
   depends_on = [
     google_project_service.services["container.googleapis.com"],
@@ -96,6 +110,8 @@ module "worker" {
   project  = data.google_project.project.project_id
   location = var.location
 
+  image = var.worker_image
+
   depends_on = [
     google_project_service.services["run.googleapis.com"],
   ]
@@ -113,7 +129,37 @@ module "dispatcher" {
   worker_url   = module.worker.endpoint
   worker_token = module.worker.token
 
+  image = var.dispatcher_image
+
   depends_on = [
     google_project_service.services["container.googleapis.com"],
+  ]
+}
+
+module "orchestrator" {
+  source = "./modules/orchestrator"
+
+  project   = data.google_project.project.project_id
+  location  = var.location
+  namespace = kubernetes_namespace.ns.metadata[0].name
+
+  network = module.backend_networking.private_network_id
+
+  pubsub_topic        = module.pubsub.pubsub_topic_credentials
+  pubsub_subscription = module.pubsub.pubsub_subscription_results
+
+  db_instance_name   = module.cloud_sql.instance_name
+  db_connection_name = module.cloud_sql.connection_name
+
+  cloudflare_auth_domain = var.cloudflare_auth_domain
+  cloudflare_domain      = var.cloudflare_domain
+  cloudflare_audience    = var.cloudflare_audience
+  cloudflare_cert        = "${file("~/.cloudflared/cert.pem")}"
+
+  image = var.orchestrator_image
+
+  depends_on = [
+    google_project_service.services["container.googleapis.com"],
+    google_project_service.services["redis.googleapis.com"],
   ]
 }

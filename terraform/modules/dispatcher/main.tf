@@ -1,11 +1,11 @@
 
 locals {
   name = "dispatcher"
- 
+
   labels = {
     app = "dispatcher"
   }
- 
+
   env = {
     "PROJECT_ID"      = var.project,
     "RESULT_TOPIC_ID" = var.pubsub_topic,
@@ -86,7 +86,7 @@ resource "kubernetes_deployment" "server" {
       spec {
         service_account_name = kubernetes_service_account.server.metadata[0].name
         container {
-          image = "${var.image}:${var.image_version}"
+          image = var.image
           name  = local.name
 
           dynamic "env" {

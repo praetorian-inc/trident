@@ -11,7 +11,7 @@ resource "google_cloud_run_service" "worker" {
   template {
     spec {
       containers {
-        image = "${var.image}:${var.image_version}"
+        image = var.image
 
         env {
           name = "ACCESS_TOKEN"

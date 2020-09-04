@@ -23,9 +23,3 @@ variable "image" {
   type        = string
   default     = "gcr.io/praetorian-red-team-public/webhook-worker"
 }
-
-variable "image_version" {
-  description = "The container image version"
-  type        = string
-  default     = "latest"
-}

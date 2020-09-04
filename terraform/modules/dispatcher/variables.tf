@@ -44,12 +44,6 @@ variable "image" {
   default     = "gcr.io/praetorian-red-team-public/dispatcher"
 }
 
-variable "image_version" {
-  description = "The container image version"
-  type        = string
-  default     = "latest"
-}
-
 variable "worker_name" {
   description = "The type of worker to submit jobs to"
   type        = string
