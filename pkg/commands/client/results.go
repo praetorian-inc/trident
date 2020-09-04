@@ -9,13 +9,18 @@ import (
 	"os"
 	"strings"
 
+	"github.com/jedib0t/go-pretty/table"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"trident/pkg/db"
 )
 
 var (
 	flagReturnedFields string
 	flagFilterFile     string
+	flagOutputFormat   string
 )
 
 var resultsCmd = &cobra.Command{
@@ -33,6 +38,7 @@ func init() {
 	resultsCmd.Flags().StringVarP(&flagFilterFile, "filter", "f", "", "file containing your desired results filter")
 	resultsCmd.MarkFlagRequired("passfile")
 
+	resultsCmd.Flags().StringVarP(&flagOutputFormat, "format", "o", "table", "output format (table, csv, json)")
 	rootCmd.AddCommand(resultsCmd)
 }
 
@@ -76,6 +82,7 @@ func resultsGet(cmd *cobra.Command, args []string) {
 		fmt.Printf("%v", err)
 		os.Exit(1)
 	}
+	defer resp.Body.Close()
 
 	respBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -83,5 +90,33 @@ func resultsGet(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	fmt.Printf("response: %v", string(respBody))
+	var results []db.Result
+
+	err = json.Unmarshal(respBody, &results)
+	if err != nil {
+		fmt.Printf("%v", err)
+		os.Exit(1)
+	}
+
+	if flagOutputFormat == "json" {
+		fmt.Print(string(respBody))
+		return
+	}
+
+	t := table.NewWriter()
+	t.SetOutputMirror(os.Stdout)
+	t.AppendHeader(table.Row{"CampaignID", "IP", "Timestamp", "Username", "Password", "Valid", "Locked", "MFA", "RateLimited"})
+
+	for _, result := range results {
+		t.AppendRows([]table.Row{
+			{result.CampaignID, result.IP, result.Timestamp, result.Username, result.Password, result.Valid, result.Locked, result.MFA, result.RateLimited},
+		})
+	}
+
+	if flagOutputFormat == "csv" {
+		t.RenderCSV()
+		return
+	}
+
+	t.Render()
 }
