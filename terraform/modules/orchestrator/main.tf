@@ -49,8 +49,8 @@ resource "google_sql_database" "database" {
 
 resource "google_sql_user" "user" {
   instance = var.db_instance_name
-  host     = "cloudsqlproxy~%"
   name     = "trident"
+  host     = null
   password = random_password.db.result
 }
 

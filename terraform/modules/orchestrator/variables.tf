@@ -18,6 +18,11 @@ variable "namespace" {
   type        = string
 }
 
+variable "image" {
+  description = "The container image to deploy"
+  type        = string
+}
+
 variable "network" {
   description = "The VPC network ID for redis"
   type        = string
@@ -67,9 +72,3 @@ variable "cloudflare_cert" {
 # OPTIONAL PARAMETERS
 # Generally, these values won't need to be changed.
 # -----------------------------------------------------------------------------
-
-variable "image" {
-  description = "The container image to deploy"
-  type        = string
-  default     = "gcr.io/praetorian-red-team-public/dispatcher"
-}

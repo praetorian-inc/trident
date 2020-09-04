@@ -41,14 +41,17 @@ variable "cloudflare_audience" {
 variable "worker_image" {
   description = "The container image ref for worker"
   type        = string
+  default     = "gcr.io/praetorian-red-team-public/webhook-worker:0.1.0"
 }
 
 variable "dispatcher_image" {
   description = "The container image ref for dispatcher"
   type        = string
+  default     = "gcr.io/praetorian-red-team-public/dispatcher:0.1.0"
 }
 
 variable "orchestrator_image" {
   description = "The container image ref for orchestrator"
   type        = string
+  default     = "gcr.io/praetorian-red-team-public/orchestrator:0.1.0"
 }
