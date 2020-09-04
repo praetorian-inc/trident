@@ -13,14 +13,21 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-
-	"trident/pkg/db"
 )
 
 var (
 	flagReturnedFields string
-	flagFilterFile     string
+	flagFilter         string
 	flagOutputFormat   string
+)
+
+var (
+	DefaultReturnedFields = []string{
+		"id",
+		"username",
+		"password",
+		"valid",
+	}
 )
 
 var resultsCmd = &cobra.Command{
@@ -33,12 +40,14 @@ var resultsCmd = &cobra.Command{
 }
 
 func init() {
-	resultsCmd.Flags().StringVarP(&flagReturnedFields, "return", "r", "*", "the list of fields you would like to see from the results (comma-separated string)")
+	resultsCmd.Flags().StringVarP(&flagReturnedFields, "return", "r", "*",
+        "the list of fields you would like to see from the results (comma-separated string)")
 
-	resultsCmd.Flags().StringVarP(&flagFilterFile, "filter", "f", "", "file containing your desired results filter")
-	resultsCmd.MarkFlagRequired("passfile")
+	resultsCmd.Flags().StringVarP(&flagFilter, "filter", "f", `{"valid":true}`,
+        "filter on db results (specified in JSON)")
 
-	resultsCmd.Flags().StringVarP(&flagOutputFormat, "format", "o", "table", "output format (table, csv, json)")
+	resultsCmd.Flags().StringVarP(&flagOutputFormat, "format", "o", "table",
+        "output format (table, csv, json)")
 	rootCmd.AddCommand(resultsCmd)
 }
 
@@ -47,16 +56,8 @@ func resultsGet(cmd *cobra.Command, args []string) {
 
 	fields := strings.Split(strings.ReplaceAll(flagReturnedFields, " ", ""), ",")
 
-	filterFile, err := os.Open(flagFilterFile)
-	if err != nil {
-		log.Fatalf("error opening filter file: %s", err)
-	}
-	defer filterFile.Close()
-
-	byteValue, _ := ioutil.ReadAll(filterFile)
-
 	var filter map[string]interface{}
-	json.Unmarshal([]byte(byteValue), &filter)
+	json.Unmarshal([]byte(flagFilter), &filter)
 	requestBody, err := json.Marshal(map[string]interface{}{
 		"ReturnedFields": fields,
 		"Filter":         filter,
@@ -83,7 +84,7 @@ func resultsGet(cmd *cobra.Command, args []string) {
 		log.Fatalf("error reading response body: %s", err)
 	}
 
-	var results []db.Result
+	var results []map[string]interface{}
 
 	err = json.Unmarshal(respBody, &results)
 	if err != nil {
@@ -97,12 +98,24 @@ func resultsGet(cmd *cobra.Command, args []string) {
 
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
-	t.AppendHeader(table.Row{"CampaignID", "IP", "Timestamp", "Username", "Password", "Valid", "Locked", "MFA", "RateLimited"})
+
+	if flagReturnedFields == "*" {
+		fields = DefaultReturnedFields
+	}
+
+	header := make(table.Row, 0, len(fields))
+	for _, field := range fields {
+		header = append(header, field)
+	}
+	t.AppendHeader(header)
 
 	for _, result := range results {
-		t.AppendRows([]table.Row{
-			{result.CampaignID, result.IP, result.Timestamp, result.Username, result.Password, result.Valid, result.Locked, result.MFA, result.RateLimited},
-		})
+		var row table.Row
+		for _, field := range fields {
+			v := result[field]
+			row = append(row, v)
+		}
+		t.AppendRows([]table.Row{row})
 	}
 
 	if flagOutputFormat == "csv" {

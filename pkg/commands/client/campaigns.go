@@ -18,7 +18,7 @@ var (
 	flagPasswordFile     string
 	flagNotBefore        string
 	flagActiveWindow     time.Duration
-	flagScheduleInterval int
+	flagScheduleInterval time.Duration
 	flagProvider         string
 )
 
@@ -33,26 +33,27 @@ var campaignCreateCmd = &cobra.Command{
 
 func init() {
 	defaultNotBefore := time.Now().Format(time.RFC3339Nano)
-	defaultActiveWindow, err := time.ParseDuration("4w")
-	if err != nil {
-		log.Fatalf("error parsing default active window: %s", err)
-	}
 
-	campaignCreateCmd.Flags().StringVarP(&flagUsernameFile, "userfile", "u", "", "file of usernames (newline separated)")
+	campaignCreateCmd.Flags().StringVarP(&flagUsernameFile, "userfile", "u", "",
+        "file of usernames (newline separated)")
 	campaignCreateCmd.MarkFlagRequired("userfile")
 
-	campaignCreateCmd.Flags().StringVarP(&flagPasswordFile, "passfile", "p", "", "file of passwords (newline separated)")
+	campaignCreateCmd.Flags().StringVarP(&flagPasswordFile, "passfile", "p", "",
+        "file of passwords (newline separated)")
 	campaignCreateCmd.MarkFlagRequired("passfile")
 
-	campaignCreateCmd.Flags().StringVarP(&flagNotBefore, "notbefore", "b", defaultNotBefore, "requests will not start before this time")
+	campaignCreateCmd.Flags().StringVarP(&flagNotBefore, "notbefore", "b", defaultNotBefore,
+        "requests will not start before this time")
 
-	campaignCreateCmd.Flags().DurationVarP(&flagActiveWindow, "window", "w", defaultActiveWindow, "a duration that this campaign will be active (ex: 4w)")
+	campaignCreateCmd.Flags().DurationVarP(&flagActiveWindow, "window", "w", 672*time.Hour,
+        "a duration that this campaign will be active (ex: 4w)")
 
-	campaignCreateCmd.Flags().IntVarP(&flagScheduleInterval, "interval", "i", 0, "requests will happen with this interval between them")
+	campaignCreateCmd.Flags().DurationVarP(&flagScheduleInterval, "interval", "i", time.Second,
+        "requests will happen with this interval between them")
 	campaignCreateCmd.MarkFlagRequired("interval")
 
-	campaignCreateCmd.Flags().StringVarP(&flagProvider, "provider", "v", "", "this is the authentication platform you are attacking")
-	campaignCreateCmd.MarkFlagRequired("provider")
+	campaignCreateCmd.Flags().StringVarP(&flagProvider, "auth-provider", "a", "okta",
+        "this is the authentication platform you are attacking")
 
 	rootCmd.AddCommand(campaignCreateCmd)
 }
