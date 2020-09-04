@@ -29,6 +29,7 @@ jobs:
       with:
         service_account_key: ${{ secrets.GCR_SA_KEY }}
         project_id: ${{ secrets.GCR_PROJECT }}
+        export_default_credentials: true
 
     - run: |-
         gcloud --quiet auth configure-docker
