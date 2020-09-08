@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"time"
 
 	"cloud.google.com/go/pubsub"
 
@@ -46,6 +47,13 @@ func (d *Dispatcher) Listen(ctx context.Context) error {
 		err := json.Unmarshal(msg.Data, &req)
 		if err != nil {
 			log.Printf("error unmarshaling: %s", err)
+			msg.Ack()
+			return
+		}
+
+		ts := time.Now()
+		if ts.After(req.NotAfter) {
+			log.Printf("received an event after end time, dropping")
 			msg.Ack()
 			return
 		}

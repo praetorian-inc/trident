@@ -90,13 +90,12 @@ func (s *PubSubScheduler) Schedule(campaign db.Campaign) error {
 		for _, u := range campaign.Users {
 			// TODO: how do we want to handle error in task insertion?
 			err := s.pushTask(&db.Task{
-				CampaignID: campaign.ID,
-				NotBefore:  t,
-				NotAfter:   campaign.NotAfter,
-				Username:   u,
-				Password:   p,
-				Provider:   campaign.Provider,
-				// TODO: figure out jsonb -> map[string]string
+				CampaignID:       campaign.ID,
+				NotBefore:        t,
+				NotAfter:         campaign.NotAfter,
+				Username:         u,
+				Password:         p,
+				Provider:         campaign.Provider,
 				ProviderMetadata: campaign.ProviderMetadata,
 			})
 			if err != nil {

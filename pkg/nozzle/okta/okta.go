@@ -2,9 +2,13 @@ package okta
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
+
+	"golang.org/x/time/rate"
 
 	"trident/pkg/event"
 	"trident/pkg/nozzle"
@@ -21,14 +25,22 @@ func (OktaDriver) New(opts map[string]string) (nozzle.Nozzle, error) {
 	if !ok {
 		return nil, fmt.Errorf("okta nozzle requires 'domain' config parameter")
 	}
+
+	// Rate limit requests from the same worker to a maximum of 5/s
+	rl := rate.NewLimiter(rate.Every(time.Second), 5)
+
 	return &OktaNozzle{
-		Domain: domain,
+		Domain:      domain,
+		RateLimiter: rl,
 	}, nil
 }
 
 type OktaNozzle struct {
 	// Domain is the Okta subdomain
 	Domain string
+
+	// RateLimiter controls how frequently we send requests to Okta
+	RateLimiter *rate.Limiter
 }
 
 type OktaAuthRequest struct {
@@ -43,6 +55,12 @@ type OktaAuthResponse struct {
 }
 
 func (n *OktaNozzle) Login(username, password string) (*event.AuthResponse, error) {
+	ctx := context.Background()
+	err := n.RateLimiter.Wait(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	url := fmt.Sprintf("https://%s.okta.com/api/v1/authn", n.Domain)
 	data, _ := json.Marshal(map[string]string{
 		"username": username,

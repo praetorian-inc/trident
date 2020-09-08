@@ -8,6 +8,12 @@ type AuthRequest struct {
 	// CampaignID is used to track the results of the task
 	CampaignID uint `json:"campaign_id"`
 
+	// NotBefore will prevent execution until this time
+	NotBefore time.Time `json:"not_before"`
+
+	// NotAfter will prevent execution after this time
+	NotAfter time.Time `json:"not_after"`
+
 	// Username is the username at the identity provider
 	Username string `json:"username"`
 
