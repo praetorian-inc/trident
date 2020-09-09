@@ -14,10 +14,12 @@ import (
 	"trident/pkg/util"
 )
 
+// Server implements an HTTP server handler for handling tasks.
 type Server struct {
 	ip string
 }
 
+// NewWebhookServer creates a new Server.
 func NewWebhookServer() (*Server, error) {
 	externalIP, err := util.ExternalIP()
 	if err != nil {
@@ -28,8 +30,11 @@ func NewWebhookServer() (*Server, error) {
 	}, nil
 }
 
+// HealthzHandler returns an HTTP 200 ok always.
 func (s *Server) HealthzHandler(w http.ResponseWriter, r *http.Request) {}
 
+// EventHandler accepts an AuthRequest, executes the task using the nozzle
+// interface and returns the AuthResponse via JSON.
 func (s *Server) EventHandler(w http.ResponseWriter, r *http.Request) {
 	log.Info("retrieving results for query")
 	var req event.AuthRequest
@@ -72,5 +77,8 @@ func (s *Server) EventHandler(w http.ResponseWriter, r *http.Request) {
 	res.Timestamp = ts
 	res.IP = s.ip
 
-	json.NewEncoder(w).Encode(&res)
+	err = json.NewEncoder(w).Encode(&res)
+    if err != nil {
+        log.Printf("error writing to http response: %s", err)
+    }
 }
