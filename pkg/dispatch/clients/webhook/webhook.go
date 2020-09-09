@@ -19,19 +19,9 @@ type Driver struct{}
 
 // New is used to create a webhook worker client and accepts the following
 // configuration options:
-//
-// url
-//
-// URL is an HTTPS link to the webhook server.
-//
-// token
-//
-// Token is a shared secret used to authenticate the client to the webhook server.
-//
-// header
-//
-// Header is the HTTP header used for authentication
-// (defaults to X-Access-Token).
+//  url:    an HTTPS link to the webhook server.
+//  token:  a shared secret used to authenticate the client to the webhook server.
+//  header: the HTTP header used for authentication (defaults to X-Access-Token).
 func (Driver) New(opts map[string]string) (dispatch.WorkerClient, error) {
 	url, ok := opts["url"]
 	if !ok {
