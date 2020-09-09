@@ -13,13 +13,19 @@ import (
 	"trident/pkg/scheduler"
 )
 
+// Server carries context for the http handlers to work from. it keeps track of
+// the current server's database connection pool and scheduler.
 type Server struct {
 	DB  db.Datastore
 	Sch scheduler.Scheduler
 }
 
+// HealthzHandler is for k8s health checking, this always returns 200
 func (s *Server) HealthzHandler(w http.ResponseWriter, r *http.Request) {}
 
+// CampaignHandler receives data from the user about the desired campaign
+// configuration. it then inserts the associated metadata into the db and
+// schedules the campaign.
 //TODO: figure out what to do about the fact this still works if the scheduler is nil
 func (s *Server) CampaignHandler(w http.ResponseWriter, r *http.Request) {
 	log.Info("creating campaign")
@@ -48,19 +54,27 @@ func (s *Server) CampaignHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go s.Sch.Schedule(c)
+	go s.Sch.Schedule(c) // nolint:errcheck
 
 	w.Header().Add("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(&c)
+	err = json.NewEncoder(w).Encode(&c)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"campaign": c,
+		}).Errorf("error encoding campaign for return: %s", err)
+		return
+	}
 }
 
+// ResultsHandler takes a user defined database query (returned fields + filter)
+// and applies it, returning the results in JSON
 func (s *Server) ResultsHandler(w http.ResponseWriter, r *http.Request) {
 	log.Info("retrieving results for query")
 	var q db.Query
 
 	err := parse.DecodeJSONBody(w, r, &q)
 	if err != nil {
-		log.Infof("error parsing json: %s", err)
+		log.Errorf("error parsing json: %s", err)
 
 		var mr *parse.MalformedRequest
 
@@ -81,5 +95,11 @@ func (s *Server) ResultsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, message, http.StatusInternalServerError)
 	}
 
-	json.NewEncoder(w).Encode(&results)
+	err = json.NewEncoder(w).Encode(&results)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"results": results,
+		}).Errorf("error encoding results: %s", err)
+		return
+	}
 }
