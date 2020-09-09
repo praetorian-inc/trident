@@ -13,15 +13,19 @@ import (
 )
 
 const (
+	// CacheKey is the Redis key used to store the task set.
 	CacheKey = "tasks"
 )
 
+// Scheduler is an interface which wraps several scheduling functions together.
 type Scheduler interface {
 	Schedule(db.Campaign) error
 	ProduceTasks()
 	ConsumeResults() error
 }
 
+// PubSubScheduler implements the scheduler interface and produces/consumes to
+// Google Cloud Pub/Sub.
 type PubSubScheduler struct {
 	db    *db.TridentDB
 	cache *redis.Client
@@ -29,15 +33,31 @@ type PubSubScheduler struct {
 	sub   *pubsub.Subscription
 }
 
+// Options is used to configure a PubSubScheduler.
 type Options struct {
-	Database       *db.TridentDB
-	ProjectID      string
-	TopicID        string
+	// Database is a pointer to the database struct.
+	Database *db.TridentDB
+
+	// ProjectID is the Google Cloud Platform project ID
+	ProjectID string
+
+	// TopicID is the Pub/Sub topic ID used by the producer to publish tasks.
+	TopicID string
+
+	// SubscriptionID is the Pub/Sub subscription used by the consumer to pull
+	// task results.
 	SubscriptionID string
-	RedisURI       string
-	RedisPassword  string
+
+	// RedisURI is the URI to the Redis instance (used for storing the task schedule)
+	RedisURI string
+
+	// RedisPassword is the Redis password
+	RedisPassword string
 }
 
+// NewPubSubScheduler creates a PubSubScheduler given the provided Options.
+// This call will attempt to ping the provided RedisURI and error if this
+// connection fails.
 func NewPubSubScheduler(opts Options) (*PubSubScheduler, error) {
 	ctx := context.Background()
 	client, err := pubsub.NewClient(ctx, opts.ProjectID)
@@ -84,6 +104,15 @@ func (s *PubSubScheduler) popTask(task *db.Task) error {
 	return task.UnmarshalBinary([]byte(z.Member.(string)))
 }
 
+// Schedule accepts a campaign and computes all required tasks based on the
+// provided NotBefore, NotAfter, and ScheduleInterval values. Tasks are
+// scheduled by continuously adding the ScheduleInterval to a running timestamp
+// (starting at the NotBefore time). Tasks which would be scheduled after the
+// NotAfter time are discarded.
+//
+// Additionally, this scheduler prefers to schedule credential guesses for a
+// single password at a time, allowing the maximum time to pass before guessing
+// a given username again.
 func (s *PubSubScheduler) Schedule(campaign db.Campaign) error {
 	t := campaign.NotBefore
 	for _, p := range campaign.Passwords {
@@ -111,7 +140,8 @@ func (s *PubSubScheduler) Schedule(campaign db.Campaign) error {
 	return nil
 }
 
-// ProduceTasks will publish tasks to pub/sub when ready
+// ProduceTasks will poll the task schedule and publish tasks to pub/sub when
+// the top task is ready.
 func (s *PubSubScheduler) ProduceTasks() {
 	ctx := context.Background()
 	for {
@@ -125,9 +155,12 @@ func (s *PubSubScheduler) ProduceTasks() {
 			continue
 		}
 
-		if task.NotBefore.Sub(time.Now()) > 5*time.Second {
+		if time.Until(task.NotBefore) > 5*time.Second {
 			// our task was not ready, reschedule it
-			s.pushTask(&task)
+			err = s.pushTask(&task)
+			if err != nil {
+				log.Printf("error rescheduling task: %s", err)
+			}
 			time.Sleep(1 * time.Second)
 		} else {
 			// our task was ready, run it!
@@ -139,7 +172,9 @@ func (s *PubSubScheduler) ProduceTasks() {
 	}
 }
 
-// ConsumeResults will stream results from pub/sub and store them in the database
+// ConsumeResults will stream results from pub/sub and store them in the
+// database. Valid results are written directly to the database and invalid
+// results are batched by the db.StreamingInsertResults function.
 func (s *PubSubScheduler) ConsumeResults() error {
 	ctx := context.Background()
 	results := s.db.StreamingInsertResults()
@@ -153,7 +188,11 @@ func (s *PubSubScheduler) ConsumeResults() error {
 		}
 
 		if res.Valid {
-			s.db.InsertResult(&res)
+			err = s.db.InsertResult(&res)
+			if err != nil {
+				log.Printf("error inserting result into db: %s", err)
+				results <- &res
+			}
 		} else {
 			results <- &res
 		}
