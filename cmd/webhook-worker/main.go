@@ -43,7 +43,7 @@ func init() {
 	})
 }
 
-func TokenVerifier(next http.Handler) http.Handler {
+func tokenVerifier(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token := r.Header.Get("X-Access-Token")
 		if subtle.ConstantTimeCompare([]byte(token), spec.AccessToken) == 0 {
@@ -76,7 +76,7 @@ func main() {
 	r.Use(middleware.Timeout(60 * time.Second))
 
 	// Insert authenication middleware to verify access token on all requests
-	r.Use(TokenVerifier)
+	r.Use(tokenVerifier)
 
 	r.Get("/healthz", s.HealthzHandler)
 	r.Post("/", s.EventHandler)

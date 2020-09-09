@@ -67,7 +67,7 @@ jobs:
 
   # From https://github.com/reviewdog/action-golangci-lint
   golangci-lint:
-    name: runner / golangci-lint
+    name: golangci-lint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code into the Go module directory
