@@ -11,7 +11,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 
-	"trident/pkg/auth"
+	"trident/pkg/auth/cloudflare"
 	"trident/pkg/db"
 	"trident/pkg/scheduler"
 	"trident/pkg/server"
@@ -103,7 +103,7 @@ func main() {
 	r.Use(middleware.Timeout(60 * time.Second))
 
 	// Insert authenication middleware to verify JWTs on all requests
-	r.Use(auth.Verifier(spec.AuthDomain, spec.PolicyAUD))
+	r.Use(cloudflare.Verifier(spec.AuthDomain, spec.PolicyAUD))
 
 	// routes
 	r.Get("/healthz", s.HealthzHandler)

@@ -1,11 +1,10 @@
-package auth
+package cloudflare
 
 import (
 	"context"
 	"fmt"
 	"log"
 	"net/http"
-
 	"github.com/coreos/go-oidc/v3/oidc"
 )
 

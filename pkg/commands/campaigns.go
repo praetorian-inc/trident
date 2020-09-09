@@ -1,4 +1,4 @@
-package client
+package commands
 
 import (
 	"bufio"

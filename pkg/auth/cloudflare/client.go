@@ -1,4 +1,4 @@
-package auth
+package cloudflare
 
 import (
 	"net/http"
@@ -7,13 +7,6 @@ import (
 	"github.com/cloudflare/cloudflared/cmd/cloudflared/token"
 	"github.com/cloudflare/cloudflared/logger"
 )
-
-// Authenticator types define the Auth method that will modify a provided
-// http.Request to include the necessary information to authenticate that
-// request
-type Authenticator interface {
-	Auth(*http.Request) error
-}
 
 // ArgoAuthenticator implements the Authenticator interface. the only metadata
 // required by the Argo token fetcher is the target URL.

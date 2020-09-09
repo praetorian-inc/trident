@@ -1,4 +1,4 @@
-package client
+package commands
 
 import (
 	"net/url"
@@ -7,7 +7,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"trident/pkg/commands/auth"
+	"trident/pkg/auth"
+	"trident/pkg/auth/cloudflare"
 )
 
 var authenticator auth.Authenticator
@@ -49,7 +50,7 @@ func init() {
 
 	// create the global authenticator that will be used to add an auth
 	// token to each command that needs it
-	authenticator = &auth.ArgoAuthenticator{
+	authenticator = &cloudflare.ArgoAuthenticator{
 		URL: url,
 	}
 }
