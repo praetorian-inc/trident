@@ -1,28 +1,13 @@
 package db
 
 import (
-	"database/sql/driver"
 	"encoding/json"
-	"errors"
 	"time"
 
 	"github.com/lib/pq"
 )
 
-type Metadata map[string]string
-
-func (a Metadata) Value() (driver.Value, error) {
-	return json.Marshal(a)
-}
-
-func (a *Metadata) Scan(value interface{}) error {
-	b, ok := value.([]byte)
-	if !ok {
-		return errors.New("type assertion to []byte failed")
-	}
-	return json.Unmarshal(b, &a)
-}
-
+// Model is the base type that contains information about the DB record being stored.
 type Model struct {
 	ID        uint       `json:"id" gorm:"primary_key"`
 	CreatedAt time.Time  `json:"created_at"`
@@ -30,20 +15,41 @@ type Model struct {
 	DeletedAt *time.Time `json:"deleted_at"`
 }
 
+// Campaign stores the metadata associated with an entire password spraying campaign
 type Campaign struct {
+	// inherit the base model's fields
 	Model
+
+	// a campaign should not make requests before this time
 	NotBefore        time.Time       `json:"not_before"`
+
+	// a campaign should not make requests after this time
 	NotAfter         time.Time       `json:"not_after"`
+
+	// a campaign should make requests with this interval in between them
 	ScheduleInterval time.Duration   `json:"schedule_interval"`
+
+	// the slice of usernames to guess in this campaign
 	Users            pq.StringArray  `json:"users" gorm:"type:varchar(255)[]"`
+
+	// passwords to try during this campaign
 	Passwords        pq.StringArray  `json:"passwords" gorm:"type:varchar(255)[]"`
+
+	// the authentication portal this campaign is targeting
 	Provider         string          `json:"provider"`
+
+	// any extra metadata that the auth provider will need to make
+	// successful requests to the portal
 	ProviderMetadata json.RawMessage `json:"provider_metadata"`
 
+	// the results of the campaign
 	Results []Result `json:"results"`
 }
 
+// Result carries metadata about an individual result from the password spraying
+// campaign
 type Result struct {
+	// inherit the base model's fields
 	Model
 
 	// CampaignID is used to track the results of the task
@@ -77,6 +83,8 @@ type Result struct {
 	Metadata json.RawMessage `json:"metadata"`
 }
 
+
+// Task carries metadata about a single task in the password spraying campaign
 type Task struct {
 	// CampaignID is used to track the results of the task
 	CampaignID uint `json:"campaign_id"`
@@ -100,10 +108,12 @@ type Task struct {
 	ProviderMetadata json.RawMessage `json:"metadata"`
 }
 
+// MarshalBinary task marshalling
 func (t *Task) MarshalBinary() (data []byte, err error) {
 	return json.Marshal(t)
 }
 
+// UnmarshalBinary task unmarshalling
 func (t *Task) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, &t)
 }

@@ -11,6 +11,8 @@ import (
 	"github.com/lib/pq"
 )
 
+// Datastore is an interface that allows for the swap of backend database
+// drivers to support other db platforms.
 type Datastore interface {
 	InsertCampaign(*Campaign) error
 
@@ -18,23 +20,35 @@ type Datastore interface {
 	InsertResult(*Result) error
 }
 
+// TridentDB implements the Datastore interface. it is backed by a gorm.DB type
 type TridentDB struct {
 	db *gorm.DB
 }
 
+// Query allows a user to specify a filter (json formatted) and a list of fields
+// to be returned.
 type Query struct {
 	ReturnedFields []string
 	Filter         map[string]interface{}
 }
 
+// ConnectionError is a custom error type to report issues connecting to the
+// backend database
 type ConnectionError struct {
 	Msg string
 }
 
+
+// Error allows ConnectionError to implement the error interface
 func (ce *ConnectionError) Error() string {
 	return fmt.Sprintf("connection error: %s", ce.Msg)
 }
 
+// New returns a pointer to a newly constructed TridentDB. the connection string
+// format should be parseable by url.Parse.
+//
+// ex: postgres://username:password@instance/database?key=value
+//
 func New(connectionString string) (*TridentDB, error) {
 	u, err := url.Parse(connectionString)
 	if err != nil {
@@ -70,10 +84,17 @@ func New(connectionString string) (*TridentDB, error) {
 	return &s, nil
 }
 
+// InsertCampaign is a required function by the Datastore interface. it is a
+// thin wrapper around the Gorm create method, this is largely to help with
+// database mocking for tests (and for help with multiple drivers in the
+// future).
 func (t *TridentDB) InsertCampaign(campaign *Campaign) error {
 	return t.db.Create(campaign).Error
 }
 
+// SelectResults is a required function by the Datastore interface. it uses a
+// query struct which contains both a database filter and a list of fields to
+// return.
 func (t *TridentDB) SelectResults(query Query) ([]Result, error) {
 	var results []Result
 
@@ -89,20 +110,29 @@ func (t *TridentDB) SelectResults(query Query) ([]Result, error) {
 	return results, nil
 }
 
-func (s *TridentDB) InsertResult(res *Result) error {
-	return s.db.Create(res).Error
+// InsertResult is a required function by the Datastore interface. it is a
+// thin wrapper around the Gorm create method, this is largely to help with
+// database mocking for tests (and for help with multiple drivers in the
+// future).
+func (t *TridentDB) InsertResult(res *Result) error {
+	return t.db.Create(res).Error
 }
 
 const (
+	// StreamingInsertTimeout is the amount of time to batch transactions
+	// for
 	StreamingInsertTimeout = 3 * time.Second
+
+	// StreamingInsertMax is the amount of transactions to batch at a time
 	StreamingInsertMax     = 5000
 )
 
-func (s *TridentDB) StreamingInsertResults() chan *Result {
+// StreamingInsertResults is used to batch writes to the database for performance reasons.
+func (t *TridentDB) StreamingInsertResults() chan *Result {
 	results := make(chan *Result, StreamingInsertMax)
 	go func() {
 		for {
-			txn, err := s.db.DB().Begin()
+			txn, err := t.db.DB().Begin()
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -139,7 +169,7 @@ func (s *TridentDB) StreamingInsertResults() chan *Result {
 				case r := <-results:
 					execres(r)
 
-					count += 1
+					count++
 					if count > StreamingInsertMax {
 						goto commit
 					}

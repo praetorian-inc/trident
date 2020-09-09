@@ -89,11 +89,11 @@ func init() {
 // readLines reads a whole file into memory
 // and returns a slice of its lines.
 func readLines(path string) ([]string, error) {
-	file, err := os.Open(path)
+	file, err := os.Open(path) //nolint:gosec
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer file.Close() // nolint:errcheck,gosec
 
 	var lines []string
 	scanner := bufio.NewScanner(file)
@@ -153,7 +153,7 @@ func campaignCreate(cmd *cobra.Command, args []string) {
 	if err != nil {
 		log.Fatalf("error sending request: %s", err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint:errcheck
 
 	log.Debug(resp)
 	log.Info("successfully created campaign")

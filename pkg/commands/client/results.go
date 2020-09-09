@@ -100,7 +100,7 @@ func resultsGet(cmd *cobra.Command, args []string) {
 	if err != nil {
 		log.Fatalf("error sending request: %s", err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint:errcheck
 
 	// handle the results from the server, TODO this could likely be split out into a separate func
 	respBody, err := ioutil.ReadAll(resp.Body)
