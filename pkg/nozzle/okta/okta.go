@@ -14,6 +14,12 @@ import (
 	"trident/pkg/nozzle"
 )
 
+const (
+    // See https://bugs.chromium.org/p/chromium/issues/detail?id=955620
+	FrozenUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" +
+		"AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3764.0 Safari/537.36"
+)
+
 type OktaDriver struct{}
 
 func init() {
@@ -27,10 +33,11 @@ func (OktaDriver) New(opts map[string]string) (nozzle.Nozzle, error) {
 	}
 
 	// Rate limit requests from the same worker to a maximum of 5/s
-	rl := rate.NewLimiter(rate.Every(time.Second), 5)
+	rl := rate.NewLimiter(rate.Every(300*time.Millisecond), 1)
 
 	return &OktaNozzle{
 		Domain:      domain,
+		UserAgent:   FrozenUserAgent,
 		RateLimiter: rl,
 	}, nil
 }
@@ -38,6 +45,9 @@ func (OktaDriver) New(opts map[string]string) (nozzle.Nozzle, error) {
 type OktaNozzle struct {
 	// Domain is the Okta subdomain
 	Domain string
+
+	// UserAgent will override the Go-http-client user-agent in requests
+	UserAgent string
 
 	// RateLimiter controls how frequently we send requests to Okta
 	RateLimiter *rate.Limiter
@@ -68,9 +78,7 @@ func (n *OktaNozzle) Login(username, password string) (*event.AuthResponse, erro
 	})
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
 	req.Header.Set("Content-Type", "application/json")
-
-	// TODO: should we support custom user agents?
-	// req.Header.Set("User-Agent", n.UserAgent)
+	req.Header.Set("User-Agent", n.UserAgent)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
