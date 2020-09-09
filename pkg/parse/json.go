@@ -11,16 +11,21 @@ import (
 	"github.com/golang/gddo/httputil/header"
 )
 
+// MalformedRequest is a custom error type that holds a response code and a
+// message
 type MalformedRequest struct {
 	Status int
 	Msg    string
 }
 
+// Error allows for MalformedRequest to implement the Error interface
 func (mr *MalformedRequest) Error() string {
 	return mr.Msg
 }
 
-// big ups @ajmedwards
+// DecodeJSONBody will unmarshall a request body into the provided interface
+// type. it will also perform some handy checks on our request to ensure it
+// follows a format we are expecting. big ups @ajmedwards
 func DecodeJSONBody(w http.ResponseWriter, r *http.Request, dst interface{}) error {
 	if r.Header.Get("Content-Type") != "" {
 		value, _ := header.ParseValueAndParams(r.Header, "Content-Type")
@@ -47,7 +52,7 @@ func DecodeJSONBody(w http.ResponseWriter, r *http.Request, dst interface{}) err
 			return &MalformedRequest{Status: http.StatusBadRequest, Msg: msg}
 
 		case errors.Is(err, io.ErrUnexpectedEOF):
-			msg := fmt.Sprintf("Request body contains badly-formed JSON")
+			msg := "Request body contains badly-formed JSON"
 			return &MalformedRequest{Status: http.StatusBadRequest, Msg: msg}
 
 		case errors.As(err, &unmarshalTypeError):
