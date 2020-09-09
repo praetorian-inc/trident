@@ -12,6 +12,15 @@ builds:
       - linux
       - windows
       - darwin
+  -
+    main: ./cmd/trident-nozzle/main.go
+    binary: trident-nozzle
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
 archives:
   - replacements:
       386: i386
