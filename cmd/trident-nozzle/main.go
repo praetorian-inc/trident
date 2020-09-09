@@ -41,13 +41,13 @@ func main() {
 		flagUsernames = "/dev/stdin"
 	}
 
-	usernames, err := os.Open(flagUsernames)
+	usernames, err := os.Open(flagUsernames) // nolint:gosec
 	if err != nil {
 		log.Fatalf("error reading usernames: %s", err)
 	}
-	defer usernames.Close()
+	defer usernames.Close() // nolint:errcheck,gosec
 
-	content, err := ioutil.ReadFile(flagPasswords)
+	content, err := ioutil.ReadFile(flagPasswords) // nolint:gosec
 	if err != nil {
 		log.Fatalf("error reading passwords: %s", err)
 	}
