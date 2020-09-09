@@ -10,6 +10,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	log "github.com/sirupsen/logrus"
 
+
 	"trident/pkg/auth"
 	"trident/pkg/db"
 	"trident/pkg/scheduler"
@@ -17,17 +18,21 @@ import (
 )
 
 type specification struct {
+	// trident server configuration options
 	LogLevel           string `envconfig:"LOG_LEVEL" default:"INFO"`
 	AdminListenerPort  int    `envconfig:"ADMIN_LISTENING_PORT" default:"9999"`
 	DBConnectionString string `envconfig:"DB_CONNECTION_STRING" required:"true"`
 
+	// cloudflare configuration options
 	AuthDomain string `envconfig:"CF_AUTH_DOMAIN"`
 	PolicyAUD  string `envconfig:"CF_AUDIENCE"`
 
+	// pubsub configuration options
 	ProjectID      string `envconfig:"PROJECT_ID" required:"true"`
 	TopicID        string `envconfig:"TOPIC_ID" required:"true"`
 	SubscriptionID string `envconfig:"SUBSCRIPTION_ID" required:"true"`
 
+	// redis configuration options
 	RedisURI      string `envconfig:"REDIS_URI" required:"true"`
 	RedisPassword string `envconfig:"REDIS_PASSWORD"`
 }
@@ -48,6 +53,7 @@ func init() {
 	log.SetLevel(level)
 	log.SetFormatter(&log.TextFormatter{
 		FullTimestamp:   true,
+		// https://tools.ietf.org/html/rfc3339
 		TimestampFormat: time.RFC3339Nano,
 	})
 }
@@ -99,6 +105,7 @@ func main() {
 	// Insert authenication middleware to verify JWTs on all requests
 	r.Use(auth.Verifier(spec.AuthDomain, spec.PolicyAUD))
 
+	// routes
 	r.Get("/healthz", s.HealthzHandler)
 	r.Post("/campaign", s.CampaignHandler)
 	r.Post("/results", s.ResultsHandler)
@@ -115,7 +122,7 @@ func main() {
 
 	go func() {
 		log.Printf("starting scheduler result consumption from %s", spec.SubscriptionID)
-		sch.ConsumeResults()
+		_ = sch.ConsumeResults()
 	}()
 
 	<-finish
