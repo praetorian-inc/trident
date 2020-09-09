@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/coreos/go-oidc/v3/oidc"
@@ -34,7 +35,10 @@ func VerifyToken(verifier *oidc.IDTokenVerifier) func(http.Handler) http.Handler
 			accessJWT := headers.Get("Cf-Access-Jwt-Assertion")
 			if accessJWT == "" {
 				w.WriteHeader(http.StatusUnauthorized)
-				w.Write([]byte("No token on the request"))
+				_, err := w.Write([]byte("No token on the request"))
+				if err != nil {
+					log.Printf("error writing to http response: %s", err)
+				}
 				return
 			}
 
@@ -43,7 +47,10 @@ func VerifyToken(verifier *oidc.IDTokenVerifier) func(http.Handler) http.Handler
 			_, err := verifier.Verify(ctx, accessJWT)
 			if err != nil {
 				w.WriteHeader(http.StatusUnauthorized)
-				w.Write([]byte(fmt.Sprintf("Invalid token: %s", err.Error())))
+				_, err = w.Write([]byte(fmt.Sprintf("Invalid token: %s", err.Error())))
+				if err != nil {
+					log.Printf("error writing to http response: %s", err)
+				}
 				return
 			}
 			next.ServeHTTP(w, r)
