@@ -69,19 +69,19 @@ func init() {
 
 	// default: time.Now()
 	campaignCreateCmd.Flags().StringVarP(&flagNotBefore, "notbefore", "b", defaultNotBefore,
-        "requests will not start before this time")
+		"requests will not start before this time")
 
 	// default: 4 weeks = 672 hours, lol
 	campaignCreateCmd.Flags().DurationVarP(&flagActiveWindow, "window", "w", 672*time.Hour,
-        "a duration that this campaign will be active (ex: 4w)")
+		"a duration that this campaign will be active (ex: 4w)")
 
 	// default: 1 second
 	campaignCreateCmd.Flags().DurationVarP(&flagScheduleInterval, "interval", "i", time.Second,
-        "requests will happen with this interval between them")
+		"requests will happen with this interval between them")
 
 	// default: okta
 	campaignCreateCmd.Flags().StringVarP(&flagProvider, "auth-provider", "a", "okta",
-        "this is the authentication platform you are attacking")
+		"this is the authentication platform you are attacking")
 
 	rootCmd.AddCommand(campaignCreateCmd)
 }

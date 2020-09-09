@@ -49,15 +49,15 @@ var resultsCmd = &cobra.Command{
 func init() {
 	// default: * (all fields)
 	resultsCmd.Flags().StringVarP(&flagReturnedFields, "return", "r", "*",
-        "the list of fields you would like to see from the results (comma-separated string)")
+		"the list of fields you would like to see from the results (comma-separated string)")
 
 	// default: {"valid": true}, returns all valid credentials in the campaign
 	resultsCmd.Flags().StringVarP(&flagFilter, "filter", "f", `{"valid":true}`,
-        "filter on db results (specified in JSON)")
+		"filter on db results (specified in JSON)")
 
 	// default: table (terminal friendly)
 	resultsCmd.Flags().StringVarP(&flagOutputFormat, "output-format", "o", "table",
-        "output format (table, csv, json)")
+		"output format (table, csv, json)")
 	rootCmd.AddCommand(resultsCmd)
 }
 

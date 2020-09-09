@@ -12,14 +12,20 @@ var (
 	drivers   = make(map[string]Driver)
 )
 
+// Driver is the interface the wraps creation of a Nozzle.
 type Driver interface {
 	New(opts map[string]string) (Nozzle, error)
 }
 
+// Nozzle is the interface that wraps a basic Login() method to be implemented for
+// each authentication provider we support.
 type Nozzle interface {
 	Login(username, password string) (*event.AuthResponse, error)
 }
 
+// Open opens a nozzle specified by the nozzle driver name (e.g. okta) and
+// configures that nozzle via the provided opts argument. Each Nozzle should
+// document its configuration options in its New() method.
 func Open(name string, opts map[string]string) (Nozzle, error) {
 	driversMu.RLock()
 	n, ok := drivers[name]
@@ -31,6 +37,10 @@ func Open(name string, opts map[string]string) (Nozzle, error) {
 	return n.New(opts)
 }
 
+// Register makes a nozzle driver available at the provided name. If register is
+// called twice or if the driver is nil, if panics. Register() is typically
+// called in the nozzle implementation's init() function to allow for easy
+// importing of each nozzle.
 func Register(name string, driver Driver) {
 	driversMu.Lock()
 	defer driversMu.Unlock()

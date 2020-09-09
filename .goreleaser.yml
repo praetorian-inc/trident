@@ -4,8 +4,19 @@ before:
     - go mod download
 builds:
   -
+    id: trident-client
     main: ./cmd/trident-client/main.go
     binary: trident-client
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+  -
+    id: trident-nozzle
+    main: ./cmd/trident-nozzle/main.go
+    binary: trident-nozzle
     env:
       - CGO_ENABLED=0
     goos:
