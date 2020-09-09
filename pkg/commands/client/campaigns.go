@@ -14,11 +14,24 @@ import (
 )
 
 var (
+	// path to file containing usernames to test(newline separated)
 	flagUsernameFile     string
+
+	// path to file containing passwords to test(newline separated)
 	flagPasswordFile     string
+
+	// string with RFC3339Nano date format, default is time.Now()
 	flagNotBefore        string
+
+	// duration describing the window for the campaign to take place in,
+	// used to compute NotAfter
 	flagActiveWindow     time.Duration
+
+	// duration used to throttle individual requests by this much
 	flagScheduleInterval time.Duration
+
+	// authentication provider to select for target, provider metadata is
+	// read from the config file
 	flagProvider         string
 )
 
@@ -34,23 +47,39 @@ var campaignCreateCmd = &cobra.Command{
 func init() {
 	defaultNotBefore := time.Now().Format(time.RFC3339Nano)
 
+	// required arguments
+
 	campaignCreateCmd.Flags().StringVarP(&flagUsernameFile, "userfile", "u", "",
         "file of usernames (newline separated)")
-	campaignCreateCmd.MarkFlagRequired("userfile")
+	err := campaignCreateCmd.MarkFlagRequired("userfile")
+	if err != nil {
+		log.Fatalf("issue during argument parsing: %s", err)
+
+	}
 
 	campaignCreateCmd.Flags().StringVarP(&flagPasswordFile, "passfile", "p", "",
         "file of passwords (newline separated)")
-	campaignCreateCmd.MarkFlagRequired("passfile")
+	err = campaignCreateCmd.MarkFlagRequired("passfile")
+	if err != nil {
+		log.Fatalf("issue during argument parsing: %s", err)
 
+	}
+
+	// optional arguments
+
+	// default: time.Now()
 	campaignCreateCmd.Flags().StringVarP(&flagNotBefore, "notbefore", "b", defaultNotBefore,
         "requests will not start before this time")
 
+	// default: 4 weeks = 672 hours, lol
 	campaignCreateCmd.Flags().DurationVarP(&flagActiveWindow, "window", "w", 672*time.Hour,
         "a duration that this campaign will be active (ex: 4w)")
 
+	// default: 1 second
 	campaignCreateCmd.Flags().DurationVarP(&flagScheduleInterval, "interval", "i", time.Second,
         "requests will happen with this interval between them")
 
+	// default: okta
 	campaignCreateCmd.Flags().StringVarP(&flagProvider, "auth-provider", "a", "okta",
         "this is the authentication platform you are attacking")
 
@@ -93,6 +122,7 @@ func campaignCreate(cmd *cobra.Command, args []string) {
 		log.Fatalf("error parsing notBefore time: %s", err)
 	}
 
+	// duration math. NotAfter = NotBefore + ActiveWindow
 	parsedNotAfter := parsedNotBefore.Add(flagActiveWindow)
 
 	requestBody, err := json.Marshal(map[string]interface{}{
@@ -104,12 +134,16 @@ func campaignCreate(cmd *cobra.Command, args []string) {
 		"provider":          flagProvider,
 		"provider_metadata": providers[flagProvider],
 	})
+	if err != nil {
+		log.Fatalf("error during JSON marshalling for request body: %s", err)
+	}
 
 	req, err := http.NewRequest("POST", orchestrator+"/campaign", bytes.NewBuffer(requestBody))
 	if err != nil {
 		log.Fatalf("error during request creation: %s", err)
 	}
 
+	// add the authentication token to the request
 	err = authenticator.Auth(req)
 	if err != nil {
 		log.Fatalf("error during authentication: %s", err)
@@ -119,6 +153,7 @@ func campaignCreate(cmd *cobra.Command, args []string) {
 	if err != nil {
 		log.Fatalf("error sending request: %s", err)
 	}
+	defer resp.Body.Close()
 
 	log.Debug(resp)
 	log.Info("successfully created campaign")

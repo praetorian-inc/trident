@@ -22,14 +22,16 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	// Use config file from the flag.
+	// we want to support config directories in home or etc
 	viper.AddConfigPath("$HOME/.trident")
 	viper.AddConfigPath("/etc/trident")
 
+	// config file name is config.yaml
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 
-	viper.AutomaticEnv() // read in environment variables that match
+	// read in environment variables that match
+	viper.AutomaticEnv()
 
 	// If a config file is found, read it in.
 	err := viper.ReadInConfig()
@@ -39,16 +41,21 @@ func init() {
 
 	log.Infof("Using config file: %s", viper.ConfigFileUsed())
 
+	// parse out the orchestrator server URL
 	url, err := url.Parse(viper.GetString("orchestrator-url"))
 	if err != nil {
 		log.Fatalf("error parsing orchestrator url: %s", err)
 	}
 
+	// create the global authenticator that will be used to add an auth
+	// token to each command that needs it
 	authenticator = &auth.ArgoAuthenticator{
 		URL: url,
 	}
 }
 
+// Execute is the entrypoint into the cmd line interface. It will execute the
+// desired subcommand and check for an error, reporting it if so
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatalf("error during command execution: %s", err)

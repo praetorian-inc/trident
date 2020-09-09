@@ -22,6 +22,8 @@ var (
 )
 
 var (
+	// DefaultReturnedFields lists the minimum fields needed for an operator
+	// to monitor the success/failure of a spraying campaign
 	DefaultReturnedFields = []string{
 		"id",
 		"username",
@@ -51,23 +53,36 @@ func init() {
 	rootCmd.AddCommand(resultsCmd)
 }
 
+// resultsGet will request a set of results from the orchestrator using the
+// provided database filter, and field specification. then, it will format those
+// results into either a csv, json, or terminal-friendly table for output.
 func resultsGet(cmd *cobra.Command, args []string) {
 	orchestrator := viper.GetString("orchestrator-url")
 
 	fields := strings.Split(strings.ReplaceAll(flagReturnedFields, " ", ""), ",")
 
 	var filter map[string]interface{}
-	json.Unmarshal([]byte(flagFilter), &filter)
+	err := json.Unmarshal([]byte(flagFilter), &filter)
+	if err != nil {
+		log.Fatalf("error during JSON unmarshalling: %s", err)
+	}
+
+	// build our request to the orchestrator using the provided filter and
+	// fields
 	requestBody, err := json.Marshal(map[string]interface{}{
 		"ReturnedFields": fields,
 		"Filter":         filter,
 	})
+	if err != nil {
+		log.Fatalf("error during JSON marshalling for request body: %s", err)
+	}
 
 	req, err := http.NewRequest("POST", orchestrator+"/results", bytes.NewBuffer(requestBody))
 	if err != nil {
 		log.Fatalf("error during request creation: %s", err)
 	}
 
+	// add CloudFlare Access token to our request
 	err = authenticator.Auth(req)
 	if err != nil {
 		log.Fatalf("error during authentication: %s", err)
@@ -79,6 +94,7 @@ func resultsGet(cmd *cobra.Command, args []string) {
 	}
 	defer resp.Body.Close()
 
+	// handle the results from the server, TODO this could likely be split out into a separate func
 	respBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatalf("error reading response body: %s", err)
