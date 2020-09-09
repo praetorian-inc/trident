@@ -11,6 +11,9 @@ import (
 	"trident/pkg/event"
 )
 
+// Dispatcher creates a data pipeline which accepts tasks, sends them to a
+// worker, and publishes the result. This pipeline can be visualized as:
+//  PubSub Subscription --> WorkerClient --> PubSub Topic
 type Dispatcher struct {
 	wc WorkerClient
 
@@ -18,12 +21,22 @@ type Dispatcher struct {
 	resultc *pubsub.Topic
 }
 
+// Options is used to configure a Dispatcher
 type Options struct {
-	ProjectID      string
+
+	// ProjectID is the Google Cloud Platform project ID
+	ProjectID string
+
+	// SubscriptionID is the Pub/Sub subscription used by the dispatcher to
+    // listen for incoming tasks.
 	SubscriptionID string
-	ResultTopicID  string
+
+	// ResultTopicID is the Pub/Sub topic ID used by the dispatcher to publish
+    // results..
+	ResultTopicID string
 }
 
+// NewDispatcher creates a dispatcher based on the provided options and worker.
 func NewDispatcher(ctx context.Context, opts Options, wc WorkerClient) (*Dispatcher, error) {
 	client, err := pubsub.NewClient(ctx, opts.ProjectID)
 	if err != nil {
@@ -41,6 +54,8 @@ func NewDispatcher(ctx context.Context, opts Options, wc WorkerClient) (*Dispatc
 	}, nil
 }
 
+// Listen listens for task messages on the Pub/Sub subscription. Tasks are sent
+// to the worker and results are then published to the Pub/Sub topic.
 func (d *Dispatcher) Listen(ctx context.Context) error {
 	return d.sub.Receive(ctx, func(ctx context.Context, msg *pubsub.Message) {
 		var req event.AuthRequest
