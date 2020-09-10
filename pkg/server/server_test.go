@@ -34,7 +34,30 @@ func (m *mockDB) InsertCampaign(c *db.Campaign) error {
 func (m *mockDB) SelectResults(q db.Query) ([]db.Result, error) {
 	var results []db.Result
 
-	dec := json.NewDecoder(strings.NewReader("[{\"id\":18,\"created_at\":\"2020-08-28T14:02:34.844333414Z\",\"updated_at\":\"2020-08-28T14:02:34.844333414Z\",\"deleted_at\":null,\"not_before\":\"2020-08-28T00:00:00Z\",\"not_after\":\"2020-08-29T00:00:00Z\",\"schedule_interval\":500000000,\"users\":[\"anthony.weems+lockout@praetorian.com\"],\"passwords\":[\"Password0\",\"Password1\",\"Password1!\"],\"provider\":\"okta\",\"provider_metadata\":{\"domain\":\"dev-634850\"},\"results\":null}]"))
+	dec := json.NewDecoder(strings.NewReader(`[
+  {
+    "id": 18,
+    "created_at": "2020-08-28T14:02:34.844333414Z",
+    "updated_at": "2020-08-28T14:02:34.844333414Z",
+    "deleted_at": null,
+    "not_before": "2020-08-28T00:00:00Z",
+    "not_after": "2020-08-29T00:00:00Z",
+    "schedule_interval": 500000000,
+    "users": [
+      "alice@example.org"
+    ],
+    "passwords": [
+      "Password0",
+      "Password1",
+      "Password1!"
+    ],
+    "provider": "okta",
+    "provider_metadata": {
+      "domain": "example"
+    },
+    "results": null
+  }
+]`))
 
 	err := dec.Decode(&results)
 	if err != nil {
