@@ -12,6 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package nozzle defines an interface for all password spraying implementations
+// For example, an Okta nozzle will send login requests to Okta. Additionally,
+// this package provides a nozzle registration mechanism similar to
+// database/sql. Make sure to "blank import" each nozzle.
+//
+//  import (
+//      "github.com/praetorian-inc/trident/pkg/nozzle"
+//
+//      _ "github.com/praetorian-inc/trident/pkg/nozzle/okta"
+//  )
+//
+//  noz, err := nozzle.Open("okta", map[string]string{"domain":"example"})
+//  if err != nil {
+//      // handle error
+//  }
+//  resp, err := noz.Login("username", "password")
+//  // ...
+//
+// See https://golang.org/doc/effective_go.html#blank_import for more
+// information on "blank imports".
 package nozzle
 
 import (

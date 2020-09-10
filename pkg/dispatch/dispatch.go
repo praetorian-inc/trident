@@ -12,6 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package dispatch defines an interface for all password spraying
+// implementations For example, a webhook worker client will send tasks to via
+// HTTP requests. Additionally, this package provides a registration mechanism
+// similar to database/sql. Make sure to "blank import" each dispatch.
+//
+//  import (
+//      "github.com/praetorian-inc/trident/pkg/dispatch"
+//
+//      _ "github.com/praetorian-inc/trident/pkg/dispatch/clients/webhook"
+//  )
+//
+//  var req event.AuthRequest
+//  // ...
+//  worker, err := dispatch.Open("webhook", map[string]string{"url":"https://example.org"})
+//  if err != nil {
+//      // handle error
+//  }
+//  resp, err := worker.Submit(req)
+//  // ...
+//
+// See https://golang.org/doc/effective_go.html#blank_import for more
+// information on "blank imports".
 package dispatch
 
 import (
