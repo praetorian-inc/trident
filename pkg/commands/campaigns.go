@@ -15,24 +15,24 @@ import (
 
 var (
 	// path to file containing usernames to test(newline separated)
-	flagUsernameFile     string
+	flagUsernameFile string
 
 	// path to file containing passwords to test(newline separated)
-	flagPasswordFile     string
+	flagPasswordFile string
 
 	// string with RFC3339Nano date format, default is time.Now()
-	flagNotBefore        string
+	flagNotBefore string
 
 	// duration describing the window for the campaign to take place in,
 	// used to compute NotAfter
-	flagActiveWindow     time.Duration
+	flagActiveWindow time.Duration
 
 	// duration used to throttle individual requests by this much
 	flagScheduleInterval time.Duration
 
 	// authentication provider to select for target, provider metadata is
 	// read from the config file
-	flagProvider         string
+	flagProvider string
 )
 
 var campaignCreateCmd = &cobra.Command{
@@ -50,7 +50,7 @@ func init() {
 	// required arguments
 
 	campaignCreateCmd.Flags().StringVarP(&flagUsernameFile, "userfile", "u", "",
-        "file of usernames (newline separated)")
+		"file of usernames (newline separated)")
 	err := campaignCreateCmd.MarkFlagRequired("userfile")
 	if err != nil {
 		log.Fatalf("issue during argument parsing: %s", err)
@@ -58,7 +58,7 @@ func init() {
 	}
 
 	campaignCreateCmd.Flags().StringVarP(&flagPasswordFile, "passfile", "p", "",
-        "file of passwords (newline separated)")
+		"file of passwords (newline separated)")
 	err = campaignCreateCmd.MarkFlagRequired("passfile")
 	if err != nil {
 		log.Fatalf("issue during argument parsing: %s", err)

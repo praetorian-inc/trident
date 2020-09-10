@@ -21,22 +21,22 @@ type Campaign struct {
 	Model
 
 	// a campaign should not make requests before this time
-	NotBefore        time.Time       `json:"not_before"`
+	NotBefore time.Time `json:"not_before"`
 
 	// a campaign should not make requests after this time
-	NotAfter         time.Time       `json:"not_after"`
+	NotAfter time.Time `json:"not_after"`
 
 	// a campaign should make requests with this interval in between them
-	ScheduleInterval time.Duration   `json:"schedule_interval"`
+	ScheduleInterval time.Duration `json:"schedule_interval"`
 
 	// the slice of usernames to guess in this campaign
-	Users            pq.StringArray  `json:"users" gorm:"type:varchar(255)[]"`
+	Users pq.StringArray `json:"users" gorm:"type:varchar(255)[]"`
 
 	// passwords to try during this campaign
-	Passwords        pq.StringArray  `json:"passwords" gorm:"type:varchar(255)[]"`
+	Passwords pq.StringArray `json:"passwords" gorm:"type:varchar(255)[]"`
 
 	// the authentication portal this campaign is targeting
-	Provider         string          `json:"provider"`
+	Provider string `json:"provider"`
 
 	// any extra metadata that the auth provider will need to make
 	// successful requests to the portal
@@ -82,7 +82,6 @@ type Result struct {
 	// Additional metadata from the auth provider (e.g. information about MFA)
 	Metadata json.RawMessage `json:"metadata"`
 }
-
 
 // Task carries metadata about a single task in the password spraying campaign
 type Task struct {

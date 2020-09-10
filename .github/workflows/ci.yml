@@ -1,6 +1,6 @@
 # Used as inspiration: https://github.com/caddyserver/caddy/blob/master/.github/workflows/ci.yml
 
-name: Tests
+name: CI
 
 on:
   push:

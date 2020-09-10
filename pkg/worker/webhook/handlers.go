@@ -8,10 +8,10 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"trident/pkg/event"
-	"trident/pkg/nozzle"
-	"trident/pkg/parse"
-	"trident/pkg/util"
+	"github.com/praetorian-inc/trident/pkg/event"
+	"github.com/praetorian-inc/trident/pkg/nozzle"
+	"github.com/praetorian-inc/trident/pkg/parse"
+	"github.com/praetorian-inc/trident/pkg/util"
 )
 
 // Server implements an HTTP server handler for handling tasks.
@@ -78,7 +78,7 @@ func (s *Server) EventHandler(w http.ResponseWriter, r *http.Request) {
 	res.IP = s.ip
 
 	err = json.NewEncoder(w).Encode(&res)
-    if err != nil {
-        log.Printf("error writing to http response: %s", err)
-    }
+	if err != nil {
+		log.Printf("error writing to http response: %s", err)
+	}
 }

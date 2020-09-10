@@ -8,7 +8,7 @@ import (
 
 	"cloud.google.com/go/pubsub"
 
-	"trident/pkg/event"
+	"github.com/praetorian-inc/trident/pkg/event"
 )
 
 // Dispatcher creates a data pipeline which accepts tasks, sends them to a
@@ -28,11 +28,11 @@ type Options struct {
 	ProjectID string
 
 	// SubscriptionID is the Pub/Sub subscription used by the dispatcher to
-    // listen for incoming tasks.
+	// listen for incoming tasks.
 	SubscriptionID string
 
 	// ResultTopicID is the Pub/Sub topic ID used by the dispatcher to publish
-    // results..
+	// results..
 	ResultTopicID string
 }
 

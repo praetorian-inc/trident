@@ -12,9 +12,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"trident/pkg/nozzle"
+	"github.com/praetorian-inc/trident/pkg/nozzle"
 
-	_ "trident/pkg/nozzle/okta"
+	_ "github.com/praetorian-inc/trident/pkg/nozzle/okta"
 )
 
 var (

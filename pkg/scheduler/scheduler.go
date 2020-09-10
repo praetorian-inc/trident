@@ -9,7 +9,7 @@ import (
 	"cloud.google.com/go/pubsub"
 	"github.com/go-redis/redis/v7"
 
-	"trident/pkg/db"
+	"github.com/praetorian-inc/trident/pkg/db"
 )
 
 const (

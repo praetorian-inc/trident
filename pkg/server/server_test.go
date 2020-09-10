@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"trident/pkg/db"
+	"github.com/praetorian-inc/trident/pkg/db"
 )
 
 type mockDB struct{}

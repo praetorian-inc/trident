@@ -20,10 +20,10 @@ var (
 	flagReturnedFields string
 
 	// a JSON filter to use in a database query
-	flagFilter         string
+	flagFilter string
 
 	// the desired format for output (csv, json, table)
-	flagOutputFormat   string
+	flagOutputFormat string
 )
 
 var (

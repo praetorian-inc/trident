@@ -8,9 +8,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"trident/pkg/db"
-	"trident/pkg/parse"
-	"trident/pkg/scheduler"
+	"github.com/praetorian-inc/trident/pkg/db"
+	"github.com/praetorian-inc/trident/pkg/parse"
+	"github.com/praetorian-inc/trident/pkg/scheduler"
 )
 
 // Server carries context for the http handlers to work from. it keeps track of

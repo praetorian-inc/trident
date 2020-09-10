@@ -3,17 +3,17 @@ package okta
 import (
 	"fmt"
 	"math/rand"
-    "os"
+	"os"
 	"testing"
 	"time"
 
-	"trident/pkg/nozzle"
+	"github.com/praetorian-inc/trident/pkg/nozzle"
 )
 
 func TestMain(m *testing.M) {
 	rand.Seed(time.Now().UTC().UnixNano())
 	v := m.Run()
-    os.Exit(v)
+	os.Exit(v)
 }
 
 type testcase struct {
