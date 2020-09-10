@@ -3,14 +3,26 @@ package cloudflare
 import (
 	"context"
 	"fmt"
-	"github.com/coreos/go-oidc/v3/oidc"
 	"log"
 	"net/http"
+	"net/url"
+
+	"github.com/coreos/go-oidc/v3/oidc"
+
+	"github.com/praetorian-inc/trident/pkg/util"
 )
 
 // Verifier returns a function that is used to verify the cloudflare access token
 func Verifier(authDomain string, policyAUD string) func(http.Handler) http.Handler {
-	certsURL := fmt.Sprintf("%s/cdn-cgi/access/certs", authDomain)
+	u, err := url.Parse(authDomain)
+	if err != nil {
+		log.Fatalf("authDomain not a valid url: %s", err)
+	}
+	certsURL := fmt.Sprintf("https://%s/cdn-cgi/access/certs", u.Host)
+	err = util.ValidateURLSuffix(certsURL, ".cloudflareaccess.com")
+	if err != nil {
+		log.Fatalf("cloudflare access url validation failed: %s", err)
+	}
 
 	config := &oidc.Config{
 		ClientID: policyAUD,
