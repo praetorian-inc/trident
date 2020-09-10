@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"sync"
-	"trident/pkg/event"
+
+	"github.com/praetorian-inc/trident/pkg/event"
 )
 
 var (

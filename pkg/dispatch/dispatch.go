@@ -8,7 +8,7 @@ import (
 
 	"cloud.google.com/go/pubsub"
 
-	"trident/pkg/event"
+	"github.com/praetorian-inc/trident/pkg/event"
 )
 
 // Dispatcher creates a data pipeline which accepts tasks, sends them to a

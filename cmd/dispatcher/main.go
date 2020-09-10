@@ -7,10 +7,10 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	log "github.com/sirupsen/logrus"
 
-	"trident/pkg/dispatch"
+	"github.com/praetorian-inc/trident/pkg/dispatch"
 
 	// TODO: is there a way to make this automatic for all workers?
-	_ "trident/pkg/dispatch/clients/webhook"
+	_ "github.com/praetorian-inc/trident/pkg/dispatch/clients/webhook"
 )
 
 type specification struct {

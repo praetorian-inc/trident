@@ -7,8 +7,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"trident/pkg/auth"
-	"trident/pkg/auth/cloudflare"
+	"github.com/praetorian-inc/trident/pkg/auth"
+	"github.com/praetorian-inc/trident/pkg/auth/cloudflare"
 )
 
 var authenticator auth.Authenticator

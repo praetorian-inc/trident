@@ -11,10 +11,10 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	log "github.com/sirupsen/logrus"
 
-	"trident/pkg/worker/webhook"
+	"github.com/praetorian-inc/trident/pkg/worker/webhook"
 
 	// TODO: is there a way to make this automatic for all nozzles?
-	_ "trident/pkg/nozzle/okta"
+	_ "github.com/praetorian-inc/trident/pkg/nozzle/okta"
 )
 
 type specification struct {

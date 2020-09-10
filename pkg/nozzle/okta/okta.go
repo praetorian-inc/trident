@@ -10,8 +10,8 @@ import (
 
 	"golang.org/x/time/rate"
 
-	"trident/pkg/event"
-	"trident/pkg/nozzle"
+	"github.com/praetorian-inc/trident/pkg/event"
+	"github.com/praetorian-inc/trident/pkg/nozzle"
 )
 
 const (

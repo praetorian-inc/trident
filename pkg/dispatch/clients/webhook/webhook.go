@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"trident/pkg/dispatch"
-	"trident/pkg/event"
+	"github.com/praetorian-inc/trident/pkg/dispatch"
+	"github.com/praetorian-inc/trident/pkg/event"
 )
 
 func init() {

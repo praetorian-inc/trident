@@ -1,4 +1,4 @@
-module trident
+module github.com/praetorian-inc/trident
 
 go 1.14
 
