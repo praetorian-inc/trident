@@ -130,4 +130,3 @@ func (t *Task) MarshalBinary() ([]byte, error) {
 func (t *Task) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, &t)
 }
-
