@@ -122,7 +122,7 @@ type Task struct {
 }
 
 // MarshalBinary task marshalling
-func (t *Task) MarshalBinary() (data []byte, err error) {
+func (t *Task) MarshalBinary() ([]byte, error) {
 	return json.Marshal(t)
 }
 
@@ -130,3 +130,4 @@ func (t *Task) MarshalBinary() (data []byte, err error) {
 func (t *Task) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, &t)
 }
+
