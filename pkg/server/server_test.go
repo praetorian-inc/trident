@@ -49,6 +49,10 @@ func (m *mockDB) InsertResult(r *db.Result) error {
 	return nil
 }
 
+func (m *mockDB) Close() error {
+	return nil
+}
+
 type mockScheduler struct{}
 
 func (m *mockScheduler) Schedule(c db.Campaign) error {
