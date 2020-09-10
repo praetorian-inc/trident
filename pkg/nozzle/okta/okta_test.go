@@ -3,7 +3,7 @@ package okta
 import (
 	"fmt"
 	"math/rand"
-    "os"
+	"os"
 	"testing"
 	"time"
 
@@ -13,7 +13,7 @@ import (
 func TestMain(m *testing.M) {
 	rand.Seed(time.Now().UTC().UnixNano())
 	v := m.Run()
-    os.Exit(v)
+	os.Exit(v)
 }
 
 type testcase struct {

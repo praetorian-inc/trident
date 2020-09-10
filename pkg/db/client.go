@@ -38,7 +38,6 @@ type ConnectionError struct {
 	Msg string
 }
 
-
 // Error allows ConnectionError to implement the error interface
 func (ce *ConnectionError) Error() string {
 	return fmt.Sprintf("connection error: %s", ce.Msg)
@@ -124,7 +123,7 @@ const (
 	StreamingInsertTimeout = 3 * time.Second
 
 	// StreamingInsertMax is the amount of transactions to batch at a time
-	StreamingInsertMax     = 5000
+	StreamingInsertMax = 5000
 )
 
 // StreamingInsertResults is used to batch writes to the database for performance reasons.

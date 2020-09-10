@@ -78,7 +78,7 @@ func (s *Server) EventHandler(w http.ResponseWriter, r *http.Request) {
 	res.IP = s.ip
 
 	err = json.NewEncoder(w).Encode(&res)
-    if err != nil {
-        log.Printf("error writing to http response: %s", err)
-    }
+	if err != nil {
+		log.Printf("error writing to http response: %s", err)
+	}
 }

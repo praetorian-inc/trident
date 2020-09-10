@@ -15,9 +15,9 @@ import (
 )
 
 const (
-    // FrozenUserAgent is a static user agent that we use for all requests. This
-    // value is based on the UA client hint work within browsers.
-    // Additional details: https://bugs.chromium.org/p/chromium/issues/detail?id=955620
+	// FrozenUserAgent is a static user agent that we use for all requests. This
+	// value is based on the UA client hint work within browsers.
+	// Additional details: https://bugs.chromium.org/p/chromium/issues/detail?id=955620
 	FrozenUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" +
 		"AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3764.0 Safari/537.36"
 )
@@ -97,7 +97,7 @@ func (n *Nozzle) Login(username, password string) (*event.AuthResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-    defer resp.Body.Close() // nolint:errcheck
+	defer resp.Body.Close() // nolint:errcheck
 
 	switch resp.StatusCode {
 	case 200:

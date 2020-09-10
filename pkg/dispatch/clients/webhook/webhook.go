@@ -60,16 +60,16 @@ type Client struct {
 func (w *Client) Submit(r event.AuthRequest) (*event.AuthResponse, error) {
 	data, _ := json.Marshal(r)
 	req, err := http.NewRequest("POST", w.URL, bytes.NewBuffer(data))
-    if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Set(w.Header, w.Token)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
-    defer resp.Body.Close() // nolint:errcheck
+	defer resp.Body.Close() // nolint:errcheck
 
 	var res event.AuthResponse
 	err = json.NewDecoder(resp.Body).Decode(&res)

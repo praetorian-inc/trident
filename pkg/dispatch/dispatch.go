@@ -28,11 +28,11 @@ type Options struct {
 	ProjectID string
 
 	// SubscriptionID is the Pub/Sub subscription used by the dispatcher to
-    // listen for incoming tasks.
+	// listen for incoming tasks.
 	SubscriptionID string
 
 	// ResultTopicID is the Pub/Sub topic ID used by the dispatcher to publish
-    // results..
+	// results..
 	ResultTopicID string
 }
 

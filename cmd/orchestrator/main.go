@@ -10,7 +10,6 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	log "github.com/sirupsen/logrus"
 
-
 	"trident/pkg/auth/cloudflare"
 	"trident/pkg/db"
 	"trident/pkg/scheduler"
@@ -52,7 +51,7 @@ func init() {
 
 	log.SetLevel(level)
 	log.SetFormatter(&log.TextFormatter{
-		FullTimestamp:   true,
+		FullTimestamp: true,
 		// https://tools.ietf.org/html/rfc3339
 		TimestampFormat: time.RFC3339Nano,
 	})

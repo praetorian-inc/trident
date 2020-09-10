@@ -60,4 +60,3 @@ type AuthResponse struct {
 	// Additional metadata from the auth provider (e.g. information about MFA)
 	Metadata map[string]interface{} `json:"metadata"`
 }
-
