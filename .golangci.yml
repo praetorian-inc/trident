@@ -383,6 +383,9 @@ linters:
     # Printf calls whose arguments do not align with the format string
     - govet
 
+    # Ensure code has been run through `go fmt`
+    - gofmt
+
     # Errcheck is a program for checking for unchecked errors in go programs.
     # These unchecked errors can be critical bugs in some cases
     - errcheck
