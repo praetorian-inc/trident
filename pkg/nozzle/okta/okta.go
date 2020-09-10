@@ -12,6 +12,7 @@ import (
 
 	"github.com/praetorian-inc/trident/pkg/event"
 	"github.com/praetorian-inc/trident/pkg/nozzle"
+	"github.com/praetorian-inc/trident/pkg/util"
 )
 
 const (
@@ -81,6 +82,11 @@ func (n *Nozzle) Login(username, password string) (*event.AuthResponse, error) {
 	}
 
 	url := fmt.Sprintf("https://%s.okta.com/api/v1/authn", n.Domain)
+	err = util.ValidateURLSuffix(url, ".okta.com")
+	if err != nil {
+		return nil, err
+	}
+
 	data, _ := json.Marshal(map[string]string{
 		"username": username,
 		"password": password,
