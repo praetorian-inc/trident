@@ -136,7 +136,10 @@ func resultsGet(cmd *cobra.Command, args []string) {
 	for _, result := range results {
 		var row table.Row
 		for _, field := range fields {
-			v := result[field]
+			v, ok := result[field]
+			if !ok {
+				log.Fatal("there was an error retrieving results from the map")
+			}
 			row = append(row, v)
 		}
 		t.AppendRows([]table.Row{row})
