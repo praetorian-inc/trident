@@ -1,6 +1,8 @@
 # trident
 
 [![CI](https://github.com/praetorian-inc/trident/workflows/CI/badge.svg)](https://github.com/praetorian-inc/trident/actions?query=branch%3Adevelopment)
+[![Release](https://github.com/praetorian-inc/trident/workflows/release/badge.svg)](https://github.com/praetorian-inc/trident/releases)
+[![Docker](https://github.com/praetorian-inc/trident/workflows/docker/badge.svg)](https://gcr.io/praetorian-red-team-public)
 
 The Trident project is an automated password spraying tool developed to meet the
 following requirements:
