@@ -18,6 +18,7 @@ type Datastore interface {
 
 	SelectResults(Query) ([]Result, error)
 	InsertResult(*Result) error
+	Close() error
 }
 
 // TridentDB implements the Datastore interface. it is backed by a gorm.DB type
@@ -81,6 +82,12 @@ func New(connectionString string) (*TridentDB, error) {
 	s.db.AutoMigrate(&Result{})
 
 	return &s, nil
+}
+
+// Close closes the underlying gorm db instance
+func (t *TridentDB) Close() error {
+	err := t.db.Close()
+	return err
 }
 
 // InsertCampaign is a required function by the Datastore interface. it is a

@@ -66,6 +66,7 @@ func main() {
 			"connectionstring": spec.DBConnectionString,
 		}).Fatal(err)
 	}
+	defer db.Close() // nolint:errcheck
 
 	sch, err := scheduler.NewPubSubScheduler(scheduler.Options{
 		Database:       db,
