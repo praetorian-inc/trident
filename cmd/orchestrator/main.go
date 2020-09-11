@@ -136,7 +136,7 @@ func main() {
 
 	go func() {
 		log.Printf("starting scheduler result consumption from %s", spec.SubscriptionID)
-		_ = sch.ConsumeResults()
+		log.Fatal(sch.ConsumeResults())
 	}()
 
 	<-finish

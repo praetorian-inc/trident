@@ -59,8 +59,6 @@ func init() {
 }
 
 func main() {
-	finish := make(chan bool)
-
 	ctx := context.Background()
 
 	worker, err := dispatch.Open(spec.WorkerName, spec.WorkerConfig)
@@ -76,10 +74,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	go func() {
-		log.Printf("starting dispatcher for subscription %s", spec.SubscriptionID)
-		log.Fatal(dis.Listen(ctx))
-	}()
-
-	<-finish
+	log.Printf("starting dispatcher for subscription %s", spec.SubscriptionID)
+	log.Fatal(dis.Listen(ctx))
 }

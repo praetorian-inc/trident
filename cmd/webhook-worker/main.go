@@ -69,8 +69,6 @@ func tokenVerifier(next http.Handler) http.Handler {
 }
 
 func main() {
-	finish := make(chan bool)
-
 	s, err := webhook.NewWebhookServer()
 	if err != nil {
 		log.Fatal(err)
@@ -95,10 +93,6 @@ func main() {
 	r.Get("/healthz", s.HealthzHandler)
 	r.Post("/", s.EventHandler)
 
-	go func() {
-		log.Printf("starting server on port %d", spec.Port)
-		log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", spec.Port), r))
-	}()
-
-	<-finish
+	log.Printf("starting server on port %d", spec.Port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", spec.Port), r))
 }
