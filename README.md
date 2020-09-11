@@ -34,9 +34,9 @@ following requirements:
 
 ![Architecture diagram](docs/architecture.png)
 
-> This diagram was generated using Diagrams. (https://diagrams.mingrammer.com)
-> The Go gopher was designed by Renee French. (http://reneefrench.blogspot.com/)
-> The design is licensed under the Creative Commons 3.0 Attributions license.
+> This diagram was generated using [Diagrams](https://diagrams.mingrammer.com).
+> The Go gopher was designed by [Renee French](http://reneefrench.blogspot.com/)
+> and is licensed under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0).
 
 ## Deployment
 
