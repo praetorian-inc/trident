@@ -34,6 +34,10 @@ following requirements:
 
 ![Architecture diagram](docs/architecture.png)
 
+> This diagram was generated using Diagrams. (https://diagrams.mingrammer.com)
+> The Go gopher was designed by Renee French. (http://reneefrench.blogspot.com/)
+> The design is licensed under the Creative Commons 3.0 Attributions license.
+
 ## Deployment
 
 Deploying trident requires a Google Cloud Project, a domain name (for the orchestrator

@@ -14,7 +14,7 @@
 
 // Package worker houses several packages which accept tasks in some manner
 // (e.g. webhooks), open the relevant nozzle, send the requested credential
-// guess, and return the response. An aspirational example worker is a Cobalt
-// Strike worker which runs under beacon, sends requests from a victim machine,
-// and returns responses to the Cobalt Strike team server.
+// guess, and return the response. An novel worker example is to send tasks via
+// command & control to a victim machine and perform the credential guesses from
+// that victim machine in the target network.
 package worker
