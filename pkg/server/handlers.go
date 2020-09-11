@@ -40,7 +40,6 @@ func (s *Server) HealthzHandler(w http.ResponseWriter, r *http.Request) {}
 // CampaignHandler receives data from the user about the desired campaign
 // configuration. it then inserts the associated metadata into the db and
 // schedules the campaign.
-//TODO: figure out what to do about the fact this still works if the scheduler is nil
 func (s *Server) CampaignHandler(w http.ResponseWriter, r *http.Request) {
 	log.Info("creating campaign")
 	var c db.Campaign

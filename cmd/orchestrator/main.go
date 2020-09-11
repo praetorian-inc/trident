@@ -107,8 +107,8 @@ func main() {
 
 	// A good base middleware stack
 	r.Use(middleware.RequestID)
-	r.Use(middleware.RealIP) // TODO: use Cf-Connecting-Ip
-	r.Use(middleware.Logger) // TODO: hook up to our logger
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
 	// Set a timeout value on the request context (ctx), that will signal

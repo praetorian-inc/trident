@@ -103,7 +103,6 @@ func NewPubSubScheduler(opts Options) (*PubSubScheduler, error) {
 }
 
 func (s *PubSubScheduler) pushTask(task *db.Task) error {
-	// TODO: do we need per-campaign queues?
 	return s.cache.ZAdd(CacheKey, &redis.Z{
 		Score:  float64(task.NotBefore.UnixNano()),
 		Member: task,
@@ -131,7 +130,6 @@ func (s *PubSubScheduler) Schedule(campaign db.Campaign) error {
 	t := campaign.NotBefore
 	for _, p := range campaign.Passwords {
 		for _, u := range campaign.Users {
-			// TODO: how do we want to handle error in task insertion?
 			err := s.pushTask(&db.Task{
 				CampaignID:       campaign.ID,
 				NotBefore:        t,
@@ -147,7 +145,6 @@ func (s *PubSubScheduler) Schedule(campaign db.Campaign) error {
 		}
 		t = t.Add(campaign.ScheduleInterval)
 		if t.After(campaign.NotAfter) {
-			// TODO: should this silently drops tasks that are outside the testing window
 			return nil
 		}
 	}

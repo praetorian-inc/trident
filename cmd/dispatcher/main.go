@@ -23,7 +23,6 @@ import (
 
 	"github.com/praetorian-inc/trident/pkg/dispatch"
 
-	// TODO: is there a way to make this automatic for all workers?
 	_ "github.com/praetorian-inc/trident/pkg/dispatch/clients/webhook"
 )
 

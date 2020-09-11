@@ -116,7 +116,7 @@ func resultsGet(cmd *cobra.Command, args []string) {
 	}
 	defer resp.Body.Close() // nolint:errcheck
 
-	// handle the results from the server, TODO this could likely be split out into a separate func
+	// handle the results from the server
 	respBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatalf("error reading response body: %s", err)

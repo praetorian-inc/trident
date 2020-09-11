@@ -27,7 +27,6 @@ import (
 
 	"github.com/praetorian-inc/trident/pkg/worker/webhook"
 
-	// TODO: is there a way to make this automatic for all nozzles?
 	_ "github.com/praetorian-inc/trident/pkg/nozzle/okta"
 )
 
@@ -79,7 +78,7 @@ func main() {
 	// A good base middleware stack
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
-	r.Use(middleware.Logger) // TODO: hook up to our logger
+	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
 	// Set a timeout value on the request context (ctx), that will signal
