@@ -65,22 +65,22 @@ variable "db_connection_name" {
 }
 
 variable "cloudflare_auth_domain" {
-  description = "The CloudFlare access authentication domain"
+  description = "The Cloudflare access authentication domain"
   type        = string
 }
 
 variable "cloudflare_domain" {
-  description = "The CloudFlare domain to host this service on"
+  description = "The Cloudflare domain to host this service on"
   type        = string
 }
 
 variable "cloudflare_audience" {
-  description = "The CloudFlare access audience"
+  description = "The Cloudflare access audience"
   type        = string
 }
 
 variable "cloudflare_cert" {
-  description = "The CloudFlare certificate and private key blob"
+  description = "The Cloudflare certificate and private key blob"
   type        = string
 }
 

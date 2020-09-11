@@ -26,7 +26,7 @@ import (
 	"github.com/praetorian-inc/trident/pkg/util"
 )
 
-// Verifier returns a function that is used to verify the cloudflare access token
+// Verifier returns a function that is used to verify the Cloudflare access token
 func Verifier(authDomain string, policyAUD string) func(http.Handler) http.Handler {
 	u, err := url.Parse(authDomain)
 	if err != nil {
@@ -56,7 +56,7 @@ func VerifyToken(verifier *oidc.IDTokenVerifier) func(http.Handler) http.Handler
 	return func(next http.Handler) http.Handler {
 		hfn := func(w http.ResponseWriter, r *http.Request) {
 			headers := r.Header
-			// Verify the request contains an access token signed by CloudFlare
+			// Verify the request contains an access token signed by Cloudflare
 			accessJWT := headers.Get("Cf-Access-Jwt-Assertion")
 			if accessJWT == "" {
 				w.WriteHeader(http.StatusUnauthorized)

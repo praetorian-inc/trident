@@ -104,7 +104,7 @@ func resultsGet(cmd *cobra.Command, args []string) {
 		log.Fatalf("error during request creation: %s", err)
 	}
 
-	// add CloudFlare Access token to our request
+	// add Cloudflare Access token to our request
 	err = authenticator.Auth(req)
 	if err != nil {
 		log.Fatalf("error during authentication: %s", err)

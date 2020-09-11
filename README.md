@@ -40,8 +40,8 @@ following requirements:
 
 ## Deployment
 
-Deploying trident requires a Google Cloud Project, a domain name (for the orchestrator
-API), and a CloudFlare Access configuration for this domain. CloudFlare Access is
+Deploying trident requires a Google Cloud project, a domain name (for the orchestrator
+API), and a Cloudflare Access configuration for this domain. Cloudflare Access is
 used to authenticate requests to the orchestrator API.
 
 ```bash

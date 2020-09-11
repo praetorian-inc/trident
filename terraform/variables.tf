@@ -35,17 +35,17 @@ variable "cluster_name" {
 }
 
 variable "cloudflare_auth_domain" {
-  description = "The CloudFlare Access authentication domain (e.g. https://example.cloudflareaccess.com)"
+  description = "The Cloudflare Access authentication domain (e.g. https://example.cloudflareaccess.com)"
   type        = string
 }
 
 variable "cloudflare_domain" {
-  description = "The CloudFlare Access domain (e.g. trident.operator.dev)"
+  description = "The Cloudflare Access domain (e.g. trident.operator.dev)"
   type        = string
 }
 
 variable "cloudflare_audience" {
-  description = "The CloudFlare Access audience (64 hex chars)"
+  description = "The Cloudflare Access audience (64 hex chars)"
   type        = string
 }
 
