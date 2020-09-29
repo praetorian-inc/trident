@@ -29,12 +29,12 @@ import (
 	"github.com/spf13/viper"
 )
 
-var statusCmd = &cobra.Command{
+var describeCmd = &cobra.Command{
 	Use:   "status",
 	Short: "status reporting subcommand",
-	Long:  `can be used to return the status of a running campaign.`,
+	Long:  `can be used to return the parameters that makeup a given campaign.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		statusGet(cmd, args)
+		describeGet(cmd, args)
 	},
 }
 
@@ -42,9 +42,9 @@ func init() {
 	// todo: implement the command line argument handling here
 }
 
-// statusGet will request the current status of the given campaign from the orchestrator
-// and will print the output to the terminal
-func statusGet(cmd *cobra.Command, args []string) {
+// describeGet will retrieve the parameters that make up the given campaign
+// and print the parameters to the CLI
+func describeGet(cmd *cobra.Command, args []string) {
 	// todo: implement the orchestrator/POST requests to handle accessing the campaign DB
 	// also "render" the status on the CLI here
 }
