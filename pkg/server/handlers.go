@@ -117,12 +117,11 @@ func (s *Server) ResultsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-
+// CampaignListHandler accepts no parameters and returns the list of active campaigns
+// via JSON
 func (s *Server) CampaignListHandler(w http.ResponseWriter, r *http.Request) {
 	log.Info("retrieving list of active campaigns")
 	var q db.Query
-
-	// todo: fill the query to interface with the db and list active campaigns
 
 	results, err := s.DB.ListCampaign(q)
 	if err != nil {
@@ -140,6 +139,8 @@ func (s *Server) CampaignListHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// CampaignDescribeHandler takes a user-defined DB query with the campaignID, then
+// returns the parameters of that campaign via JSON
 func (s *Server) CampaignDescribeHandler(w http.ResponseWriter, r *http.Request) {
 	log.Info("retrieving description of queried campaign")
 	var q db.Query
