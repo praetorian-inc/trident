@@ -32,6 +32,8 @@ type Datastore interface {
 
 	SelectResults(Query) ([]Result, error)
 	InsertResult(*Result) error
+	ListCampaign(Query) ([]Campaign, error)
+	DescribeCampaign(Query) (Campaign, error)
 	Close() error
 }
 
