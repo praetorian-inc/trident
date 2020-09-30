@@ -29,15 +29,6 @@ func TestMain(m *testing.M) {
 	os.Exit(v)
 }
 
-type testcase struct {
-	desc     string
-	username string
-	password string
-	valid    bool
-	mfa      bool
-	locked   bool
-}
-
 func TestNozzle(t *testing.T) {
 	_, err := nozzle.Open("adfs", map[string]string{
 		"domain": "adfs.example.com",

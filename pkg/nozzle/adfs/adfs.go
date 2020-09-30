@@ -97,7 +97,7 @@ type Nozzle struct {
 }
 
 var (
-	windowsTransportUrl     = "https://%s/adfs/services/trust/2005/windowstransport"
+	windowsTransportURL     = "https://%s/adfs/services/trust/2005/windowstransport"
 	windowsTransportRequest = `<?xml version="1.0" encoding="UTF-8"?>
 <s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope"
 	xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"
@@ -120,7 +120,7 @@ var (
     </wst:RequestSecurityToken>
   </s:Body>
 </s:Envelope>`
-	usernameMixedUrl     = "https://%s/adfs/services/trust/2005/usernamemixed"
+	usernameMixedURL     = "https://%s/adfs/services/trust/2005/usernamemixed"
 	usernameMixedRequest = `<?xml version="1.0" encoding="UTF-8"?>
 <s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope"
             xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"
@@ -153,18 +153,20 @@ var (
 
 func escape(s string) string {
 	var b bytes.Buffer
-	xml.EscapeText(&b, []byte(s))
+	xml.EscapeText(&b, []byte(s)) // nolint:gosec,errcheck
 	return b.String()
 }
 
 func (n *Nozzle) ntlmStrategy(username, password string) (*event.AuthResponse, error) {
-	url := fmt.Sprintf(windowsTransportUrl, n.Domain)
+	url := fmt.Sprintf(windowsTransportURL, n.Domain)
 	data := fmt.Sprintf(windowsTransportRequest, n.Domain, n.Domain)
 
 	client := &http.Client{
 		Transport: ntlmssp.Negotiator{
 			RoundTripper: &http.Transport{
-				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+				TLSClientConfig: &tls.Config{
+					InsecureSkipVerify: true, // nolint:gosec
+				},
 			},
 		},
 	}
@@ -198,13 +200,15 @@ func (n *Nozzle) ntlmStrategy(username, password string) (*event.AuthResponse, e
 }
 
 func (n *Nozzle) usernameMixedStrategy(username, password string) (*event.AuthResponse, error) {
-	url := fmt.Sprintf(usernameMixedUrl, n.Domain)
+	url := fmt.Sprintf(usernameMixedURL, n.Domain)
 	data := fmt.Sprintf(usernameMixedRequest,
 		n.Domain, escape(username), escape(password), n.Domain)
 
 	client := &http.Client{
 		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true, // nolint:gosec
+			},
 		},
 	}
 
