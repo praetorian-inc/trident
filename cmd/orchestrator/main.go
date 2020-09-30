@@ -123,6 +123,8 @@ func main() {
 	r.Get("/healthz", s.HealthzHandler)
 	r.Post("/campaign", s.CampaignHandler)
 	r.Post("/results", s.ResultsHandler)
+	r.Get("/list", s.CampaignListHandler)
+	r.Post("/describe", s.CampaignDescribeHandler)
 
 	go func() {
 		log.Printf("starting server on port %d", spec.AdminListenerPort)

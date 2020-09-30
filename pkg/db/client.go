@@ -224,3 +224,12 @@ func (t *TridentDB) StreamingInsertResults() chan *Result {
 	}()
 	return results
 }
+
+
+func (t *TridentDB) ListCampaign(query Query) ([]Result, error) {
+
+}
+
+func (t *TridentDB) DescribeCampaign(query Query) ([]Result, error) {
+
+}

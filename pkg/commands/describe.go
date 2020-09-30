@@ -29,6 +29,11 @@ import (
 	"github.com/spf13/viper"
 )
 
+var (
+	// identifier for the campaign
+	campaignID string
+)
+
 var describeCmd = &cobra.Command{
 	Use:   "status",
 	Short: "status reporting subcommand",
@@ -40,6 +45,8 @@ var describeCmd = &cobra.Command{
 
 func init() {
 	// todo: implement the command line argument handling here
+	describeCmd.Flags().StringVarP(&campaignID, "campaign", "c", "*",
+		"the identifier of the campaign.")
 }
 
 // describeGet will retrieve the parameters that make up the given campaign
@@ -47,4 +54,5 @@ func init() {
 func describeGet(cmd *cobra.Command, args []string) {
 	// todo: implement the orchestrator/POST requests to handle accessing the campaign DB
 	// also "render" the status on the CLI here
+	orchestrator := viper.GetString("orchestrator-url")
 }

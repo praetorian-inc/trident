@@ -40,6 +40,8 @@ var listCmd = &cobra.Command{
 
 func init() {
 	// todo: implement the command line argument handling here
+	// or maybe there's nothing to do here, I don't think `list` takes any
+	// special args. it just... lists
 }
 
 
@@ -48,4 +50,5 @@ func init() {
 func listGet(cmd *cobra.Command, args []string) {
 	// todo: implement the orchestrator/POST requests to handle accessing the campaign DB
 	// also "render" the list of campaigns on the CLI here
+	orchestrator := viper.GetString("orchestrator-url")
 }
