@@ -250,7 +250,7 @@ func (t *TridentDB) DescribeCampaign(query Query) (Campaign, error) {
 		Find(&result).
 		Error
 	if err != nil {
-		return nil, err
+		return result, err
 	}
 
 	return result, nil
