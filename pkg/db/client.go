@@ -226,10 +226,21 @@ func (t *TridentDB) StreamingInsertResults() chan *Result {
 }
 
 
-func (t *TridentDB) ListCampaign(query Query) ([]Result, error) {
+func (t *TridentDB) ListCampaign(query Query) ([]Campaign, error) {
+	var results []Campaign
 
+	err := t.db.Select(query.ReturnedFields).
+		Where(query.Filter).
+		Order("timestamp DESC").
+		Find(&results).
+		Error
+	if err != nil {
+		return nil, err
+	}
+
+	return results, nil
 }
 
 func (t *TridentDB) DescribeCampaign(query Query) ([]Result, error) {
-
+	// todo: this
 }

@@ -32,6 +32,12 @@ import (
 var (
 	// identifier for the campaign
 	campaignID string
+
+	// holds a list of fields (csv) to be included in the returned output
+	flagReturnedFields string
+
+	// a JSON filter to use in a database query
+	flagFilter string
 )
 
 var describeCmd = &cobra.Command{
@@ -55,4 +61,53 @@ func describeGet(cmd *cobra.Command, args []string) {
 	// todo: implement the orchestrator/POST requests to handle accessing the campaign DB
 	// also "render" the status on the CLI here
 	orchestrator := viper.GetString("orchestrator-url")
+
+	filter = fmt.Sprintf("{ID:%s}", campaignID) 
+
+	// build our request to the orchestrator.
+	// return all fields (*) and the filter is the campaignID
+	requestBody, err := json.Marshal(map[string]interface{}{
+		"ReturnedFields": "*",
+		"Filter":         filter,
+	})
+	if err != nil {
+		log.Fatalf("error during JSON marshalling for request body: %s", err)
+	}
+
+	req, err := http.NewRequest("POST", orchestrator+"/describe", bytes.NewBuffer(requestBody))
+	if err != nil {
+		log.Fatalf("error during request creation: %s", err)
+	}
+
+	// add Cloudflare Access token to our request
+	err = authenticator.Auth(req)
+	if err != nil {
+		log.Fatalf("error during authentication: %s", err)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Fatalf("error sending request: %s", err)
+	}
+	defer resp.Body.Close() // nolint:errcheck
+
+	// handle the results from the server
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatalf("error reading response body: %s", err)
+	}
+
+	var results []map[string]interface{}
+
+	err = json.Unmarshal(respBody, &results)
+	if err != nil {
+		log.Fatalf("error parsing response json: %s", err)
+	}
+
+	//if flagOutputFormat == "json" {
+	fmt.Print(string(respBody))
+	//	return
+	//}
+
+	
 }
