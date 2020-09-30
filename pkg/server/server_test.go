@@ -53,7 +53,7 @@ func (m *mockDB) SelectResults(q db.Query) ([]db.Result, error) {
     ],
     "provider": "okta",
     "provider_metadata": {
-      "domain": "example"
+      "subdomain": "example"
     },
     "results": null
   }
@@ -127,7 +127,7 @@ func TestCampaignHandler(t *testing.T) {
 		"passwords":         []string{"Password0", "Password1", "Password1!"},
 		"provider":          "okta",
 		"provider_metadata": map[string]interface{}{
-			"domain": "dev-634850",
+			"subdomain": "dev-634850",
 		},
 	})
 

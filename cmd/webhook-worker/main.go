@@ -27,6 +27,7 @@ import (
 
 	"github.com/praetorian-inc/trident/pkg/worker/webhook"
 
+	_ "github.com/praetorian-inc/trident/pkg/nozzle/adfs"
 	_ "github.com/praetorian-inc/trident/pkg/nozzle/okta"
 )
 

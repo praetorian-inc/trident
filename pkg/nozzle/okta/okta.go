@@ -50,18 +50,18 @@ func init() {
 // domain
 //
 // The subdomain of the Okta organization. If a user logs in at
-// example.okta.com, the value of domain is "example".
+// example.okta.com, the value of subdomain is "example".
 func (Driver) New(opts map[string]string) (nozzle.Nozzle, error) {
-	domain, ok := opts["domain"]
+	subdomain, ok := opts["subdomain"]
 	if !ok {
-		return nil, fmt.Errorf("okta nozzle requires 'domain' config parameter")
+		return nil, fmt.Errorf("okta nozzle requires 'subdomain' config parameter")
 	}
 
-	// Rate limit requests from the same worker to a maximum of 5/s
+	// Rate limit requests from the same worker to a maximum of 3/s
 	rl := rate.NewLimiter(rate.Every(300*time.Millisecond), 1)
 
 	return &Nozzle{
-		Domain:      domain,
+		Subdomain:   subdomain,
 		UserAgent:   FrozenUserAgent,
 		RateLimiter: rl,
 	}, nil
@@ -69,8 +69,8 @@ func (Driver) New(opts map[string]string) (nozzle.Nozzle, error) {
 
 // Nozzle implements the nozzle.Nozzle interface for Okta.
 type Nozzle struct {
-	// Domain is the Okta subdomain
-	Domain string
+	// Subdomain is the Okta subdomain
+	Subdomain string
 
 	// UserAgent will override the Go-http-client user-agent in requests
 	UserAgent string
@@ -95,7 +95,7 @@ func (n *Nozzle) Login(username, password string) (*event.AuthResponse, error) {
 		return nil, err
 	}
 
-	url := fmt.Sprintf("https://%s.okta.com/api/v1/authn", n.Domain)
+	url := fmt.Sprintf("https://%s.okta.com/api/v1/authn", n.Subdomain)
 	err = util.ValidateURLSuffix(url, ".okta.com")
 	if err != nil {
 		return nil, err

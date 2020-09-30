@@ -20,10 +20,11 @@
 //  import (
 //      "github.com/praetorian-inc/trident/pkg/nozzle"
 //
+//      _ "github.com/praetorian-inc/trident/pkg/nozzle/adfs"
 //      _ "github.com/praetorian-inc/trident/pkg/nozzle/okta"
 //  )
 //
-//  noz, err := nozzle.Open("okta", map[string]string{"domain":"example"})
+//  noz, err := nozzle.Open("okta", map[string]string{"subdomain":"example"})
 //  if err != nil {
 //      // handle error
 //  }
