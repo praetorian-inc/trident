@@ -72,7 +72,9 @@ from `~/.trident/config.yaml`, which has the following format:
 orchestrator-url: https://trident.example.org
 providers:
   okta:
-    domain: target-subdomain
+    subdomain: example
+  adfs:
+    domain: adfs.example.org
 ```
 
 ### Campaigns
