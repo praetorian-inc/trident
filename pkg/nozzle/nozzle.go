@@ -20,6 +20,7 @@
 //  import (
 //      "github.com/praetorian-inc/trident/pkg/nozzle"
 //
+//      _ "github.com/praetorian-inc/trident/pkg/nozzle/adfs"
 //      _ "github.com/praetorian-inc/trident/pkg/nozzle/okta"
 //  )
 //

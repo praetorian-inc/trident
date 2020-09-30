@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	cloud.google.com/go/pubsub v1.6.1
+	github.com/Azure/go-ntlmssp v0.0.0-20200615164410-66371956d46c
 	github.com/cloudflare/cloudflared v0.0.0-20200820175612-810d268c99ac
 	github.com/coreos/go-oidc/v3 v3.0.0-alpha.1
 	github.com/go-chi/chi v4.1.2+incompatible
