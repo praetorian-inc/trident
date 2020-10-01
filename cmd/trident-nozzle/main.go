@@ -29,6 +29,7 @@ import (
 	"github.com/praetorian-inc/trident/pkg/nozzle"
 
 	_ "github.com/praetorian-inc/trident/pkg/nozzle/adfs"
+	_ "github.com/praetorian-inc/trident/pkg/nozzle/o365"
 	_ "github.com/praetorian-inc/trident/pkg/nozzle/okta"
 )
 
