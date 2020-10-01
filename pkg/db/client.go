@@ -231,11 +231,11 @@ func (t *TridentDB) StreamingInsertResults() chan *Result {
 func (t *TridentDB) ListCampaign() ([]Campaign, error) {
 	var campaigns []Campaign
 
-	err := t.db.Find(&campaigns).
-		Error
-	if err != nil {
-		return nil, err
-	}
+	// err := t.db.Find(&campaigns).
+	// 	Error
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	return campaigns, nil
 }
