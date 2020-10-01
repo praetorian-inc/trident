@@ -69,8 +69,10 @@ type Nozzle struct {
 }
 
 var (
-	oauth2AuthURL   = "https://%s/common/oauth2/authorize"
-	oauth2TokenURL  = "https://%s/common/oauth2/token"
+	oauth2AuthURL  = "https://%s/common/oauth2/authorize"
+	oauth2TokenURL = "https://%s/common/oauth2/token"
+	// Need to see if there's a better resource/client_id to use for this
+	// But for now, graph.windows.net should work
 	ouath2TokenBody = `grant_type=password
 	&resource=https://graph.windows.net
 	&client_id=1b730954-1685-4b74-9bfd-dac224a7b894
@@ -103,6 +105,8 @@ func (n *Nozzle) oauth2TokenLogin(username, password string) (*event.AuthRespons
 		}, nil
 	//
 	case 400:
+		//var res oktaAuthResponse
+		//err = json.NewDecoder(resp.Body).Decode(&res)
 		return &event.AuthResponse{
 			Valid: false,
 		}, nil
