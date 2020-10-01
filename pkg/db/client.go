@@ -231,7 +231,8 @@ func (t *TridentDB) StreamingInsertResults() chan *Result {
 func (t *TridentDB) ListCampaign() ([]Campaign, error) {
 	var campaigns []Campaign
 
-	err := t.db.Select('campaign_id').Find(&campaigns).
+	err := t.db.Select("campaign_id").
+		Find(&campaigns).
 		Error
 	if err != nil {
 		return nil, err
