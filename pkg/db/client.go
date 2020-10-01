@@ -243,14 +243,14 @@ func (t *TridentDB) ListCampaign(query Query) ([]Campaign, error) {
 func (t *TridentDB) DescribeCampaign(query Query) (Campaign, error) {
 	var result Campaign
 
-	err := t.db.Select(query.ReturnedFields).
-		Where(query.Filter).
-		Order("timestamp DESC").
-		Find(&result).
-		Error
-	if err != nil {
-		return result, err
-	}
+	// err := t.db.Select(query.ReturnedFields).
+	// 	Where(query.Filter).
+	// 	Order("timestamp DESC").
+	// 	Find(&result).
+	// 	Error
+	// if err != nil {
+	// 	return result, err
+	// }
 
 	return result, nil
 }
