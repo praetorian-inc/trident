@@ -15,6 +15,12 @@
 package o365
 
 import (
+	"context"
+	"fmt"
+	"time"
+
+	"golang.org/x/time/rate"
+
 	"github.com/praetorian-inc/trident/pkg/event"
 	"github.com/praetorian-inc/trident/pkg/nozzle"
 )
@@ -35,5 +41,38 @@ func init() {
 }
 
 func (Driver) New(opts map[string]string) (nozzle.Nozzle, error) {
-	return
+	domain, ok := opts["domain"]
+	if !ok {
+		return nil, fmt.Errorf("o365 nozzle require 'domain' config parameter")
+	}
+
+	rl := rate.NewLimiter(rate.Every(300*time.Millisecond), 1)
+
+	return &Nozzle{
+		Domain:      domain,
+		UserAgent:   FrozenUserAgent,
+		RateLimiter: rl,
+	}, nil
+}
+
+type Nozzle struct {
+	// Domain is the O365 domain
+	Domain string
+
+	// UserAgent will override the Go-http-client user-agent in requests
+	UserAgent string
+
+	// RateLimiter controls how frequently we send requests to O365
+	RateLimiter *rate.Limiter
+}
+
+func (n *Nozzle) Login(username, password string) (*event.AuthResponse, error) {
+	ctx := context.Background()
+	err := n.RateLimiter.Wait(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, nil
+
 }
