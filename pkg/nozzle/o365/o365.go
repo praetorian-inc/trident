@@ -17,6 +17,8 @@ package o365
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"strings"
 	"time"
 
 	"golang.org/x/time/rate"
@@ -67,9 +69,47 @@ type Nozzle struct {
 }
 
 var (
-	oauth2AuthURL  = "https://%s/common/oauth2/authorize"
-	oauth2TokenURL = "https://%s/common/oauth2/token"
+	oauth2AuthURL   = "https://%s/common/oauth2/authorize"
+	oauth2TokenURL  = "https://%s/common/oauth2/token"
+	ouath2TokenBody = `grant_type=password
+	&resource=https://graph.windows.net
+	&client_id=1b730954-1685-4b74-9bfd-dac224a7b894
+	&lient_info=1
+	&username=%s
+	&password=%s
+	&scope=openid`
 )
+
+func (n *Nozzle) oauth2TokenLogin(username, password string) (*event.AuthResponse, error) {
+	url := fmt.Sprintf(oauth2TokenURL, n.Domain)
+	body := fmt.Sprintf(ouath2TokenBody, username, password)
+
+	req, _ := http.NewRequest("POST", url, strings.NewReader(body))
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("User-Agent", n.UserAgent)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close() // nolint:errcheck
+
+	switch resp.StatusCode {
+	// Success: from docs, it seems that 200 always indicates a successful auth attempt
+	case 200:
+		return &event.AuthResponse{
+			Valid: true,
+		}, nil
+	//
+	case 400:
+		return &event.AuthResponse{
+			Valid: false,
+		}, nil
+	}
+
+	return nil, fmt.Errorf("unhandled status code from o365 oauth2 token login: %d", resp.StatusCode)
+}
 
 func (n *Nozzle) Login(username, password string) (*event.AuthResponse, error) {
 	ctx := context.Background()
@@ -78,5 +118,5 @@ func (n *Nozzle) Login(username, password string) (*event.AuthResponse, error) {
 		return nil, err
 	}
 
-	return nil, nil
+	return n.oauth2TokenLogin(username, password)
 }
