@@ -32,7 +32,7 @@ type Datastore interface {
 
 	SelectResults(Query) ([]Result, error)
 	InsertResult(*Result) error
-	ListCampaign(Query) ([]Campaign, error)
+	ListCampaign() ([]Campaign, error)
 	DescribeCampaign(Query) (Campaign, error)
 	Close() error
 }
@@ -228,16 +228,16 @@ func (t *TridentDB) StreamingInsertResults() chan *Result {
 }
 
 
-func (t *TridentDB) ListCampaign(query Query) ([]Campaign, error) {
-	var results []Campaign
+func (t *TridentDB) ListCampaign() ([]Campaign, error) {
+	var campaigns []Campaign
 
-	err := t.db.Find(&results).
+	err := t.db.Find(&campaigns).
 		Error
 	if err != nil {
 		return nil, err
 	}
 
-	return results, nil
+	return campaigns, nil
 }
 
 func (t *TridentDB) DescribeCampaign(query Query) (Campaign, error) {

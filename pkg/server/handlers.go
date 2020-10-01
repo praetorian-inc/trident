@@ -121,16 +121,16 @@ func (s *Server) ResultsHandler(w http.ResponseWriter, r *http.Request) {
 // via JSON
 func (s *Server) CampaignListHandler(w http.ResponseWriter, r *http.Request) {
 	log.Info("retrieving list of active campaigns")
-	var q db.Query
+	var campaigns []db.Campaign
 
-	results, err := s.DB.ListCampaign(q)
+	campaigns, err := s.DB.ListCampaign()
 	if err != nil {
 		message := fmt.Sprintf("there was an error collecting results from the database: %s", err)
 		log.Error(message)
 		http.Error(w, message, http.StatusInternalServerError)
 	}
 
-	err = json.NewEncoder(w).Encode(&results)
+	err = json.NewEncoder(w).Encode(&campaigns)
 	if err != nil {
 		log.WithFields(log.Fields{
 			"results": results,
