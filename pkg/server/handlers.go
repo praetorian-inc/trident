@@ -121,6 +121,7 @@ func (s *Server) ResultsHandler(w http.ResponseWriter, r *http.Request) {
 // via JSON
 func (s *Server) CampaignListHandler(w http.ResponseWriter, r *http.Request) {
 	log.Info("retrieving list of active campaigns")
+	log.Info("is this even deploying...")
 	var campaigns []db.Campaign
 
 	campaigns, err := s.DB.ListCampaign()
