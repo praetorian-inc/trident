@@ -66,6 +66,11 @@ type Nozzle struct {
 	RateLimiter *rate.Limiter
 }
 
+var (
+	oauth2AuthURL  = "https://%s/common/oauth2/authorize"
+	oauth2TokenURL = "https://%s/common/oauth2/token"
+)
+
 func (n *Nozzle) Login(username, password string) (*event.AuthResponse, error) {
 	ctx := context.Background()
 	err := n.RateLimiter.Wait(ctx)
@@ -74,5 +79,4 @@ func (n *Nozzle) Login(username, password string) (*event.AuthResponse, error) {
 	}
 
 	return nil, nil
-
 }
