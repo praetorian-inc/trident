@@ -75,6 +75,8 @@ providers:
     subdomain: example
   adfs:
     domain: adfs.example.org
+  o365:
+    domain: login.microsoft.com
 ```
 
 ### Campaigns
