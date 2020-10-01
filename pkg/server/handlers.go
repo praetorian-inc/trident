@@ -100,6 +100,7 @@ func (s *Server) ResultsHandler(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+	log.Infof("q: %s", q)
 
 	results, err := s.DB.SelectResults(q)
 	if err != nil {

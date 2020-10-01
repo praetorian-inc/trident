@@ -15,22 +15,22 @@
 package commands
 
 import (
-	"bytes"
+//	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
-	"strings"
+//	"os"
+//	"strings"
 
-	"github.com/jedib0t/go-pretty/table"
+//	"github.com/jedib0t/go-pretty/table"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 var listCmd = &cobra.Command{
-	Use:   "status",
+	Use:   "list",
 	Short: "campaign list reporting subcommand",
 	Long:  `can be used to list the currently tracked campaigns`,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -42,6 +42,7 @@ func init() {
 	// todo: implement the command line argument handling here
 	// or maybe there's nothing to do here, I don't think `list` takes any
 	// special args. it just... lists
+	rootCmd.AddCommand(listCmd)
 }
 
 
@@ -51,4 +52,41 @@ func listGet(cmd *cobra.Command, args []string) {
 	// todo: implement the orchestrator/POST requests to handle accessing the campaign DB
 	// also "render" the list of campaigns on the CLI here
 	orchestrator := viper.GetString("orchestrator-url")
+
+	req, err := http.NewRequest("GET", orchestrator+"/list", nil)
+	if err != nil {
+		log.Fatalf("error during request creation: %s", err)
+	}
+
+	// add Cloudflare Access token to our request
+	err = authenticator.Auth(req)
+	if err != nil {
+		log.Fatalf("error during authentication: %s", err)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Fatalf("error sending request: %s", err)
+	}
+	defer resp.Body.Close() // nolint:errcheck
+
+	// handle the results from the server
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatalf("error reading response body: %s", err)
+	}
+
+	log.Infof("GET response: %s", respBody)
+
+	var results []map[string]interface{}
+
+	err = json.Unmarshal(respBody, &results)
+	if err != nil {
+		log.Fatalf("error parsing response json: %s", err)
+	}
+
+	//if flagOutputFormat == "json" {
+	fmt.Print(string(respBody))
+	//	return
+	//}
 }

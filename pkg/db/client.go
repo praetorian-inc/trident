@@ -233,7 +233,6 @@ func (t *TridentDB) ListCampaign(query Query) ([]Campaign, error) {
 
 	err := t.db.Select(query.ReturnedFields).
 		Where(query.Filter).
-		Order("timestamp DESC").
 		Find(&results).
 		Error
 	if err != nil {

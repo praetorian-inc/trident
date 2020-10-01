@@ -20,10 +20,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
-	"strings"
+//	"os"
+//	"strings"
 
-	"github.com/jedib0t/go-pretty/table"
+//	"github.com/jedib0t/go-pretty/table"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -32,17 +32,11 @@ import (
 var (
 	// identifier for the campaign
 	campaignID string
-
-	// holds a list of fields (csv) to be included in the returned output
-	flagReturnedFields string
-
-	// a JSON filter to use in a database query
-	flagFilter string
 )
 
 var describeCmd = &cobra.Command{
-	Use:   "status",
-	Short: "status reporting subcommand",
+	Use:   "describe",
+	Short: "campaign describe reporting subcommand",
 	Long:  `can be used to return the parameters that makeup a given campaign.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		describeGet(cmd, args)
@@ -53,16 +47,20 @@ func init() {
 	// todo: implement the command line argument handling here
 	describeCmd.Flags().StringVarP(&campaignID, "campaign", "c", "*",
 		"the identifier of the campaign.")
+
+	rootCmd.AddCommand(describeCmd)
 }
 
 // describeGet will retrieve the parameters that make up the given campaign
 // and print the parameters to the CLI
 func describeGet(cmd *cobra.Command, args []string) {
+	log.Infof("campaign id: %s", campaignID)
 	// todo: implement the orchestrator/POST requests to handle accessing the campaign DB
 	// also "render" the status on the CLI here
 	orchestrator := viper.GetString("orchestrator-url")
 
-	filter = fmt.Sprintf("{ID:%s}", campaignID) 
+	var filter = fmt.Sprintf("{ID:%s}", campaignID) 
+	
 
 	// build our request to the orchestrator.
 	// return all fields (*) and the filter is the campaignID
@@ -70,6 +68,9 @@ func describeGet(cmd *cobra.Command, args []string) {
 		"ReturnedFields": "*",
 		"Filter":         filter,
 	})
+
+	log.Infof("request body: %s", requestBody)
+
 	if err != nil {
 		log.Fatalf("error during JSON marshalling for request body: %s", err)
 	}
@@ -92,11 +93,12 @@ func describeGet(cmd *cobra.Command, args []string) {
 	defer resp.Body.Close() // nolint:errcheck
 
 	// handle the results from the server
+	
 	respBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Fatalf("error reading response body: %s", err)
 	}
-
+	log.Infof("response: %s", respBody)
 	var results []map[string]interface{}
 
 	err = json.Unmarshal(respBody, &results)
