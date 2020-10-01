@@ -133,7 +133,7 @@ func (s *Server) CampaignListHandler(w http.ResponseWriter, r *http.Request) {
 	err = json.NewEncoder(w).Encode(&campaigns)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"results": results,
+			"results": campaigns,
 		}).Errorf("error encoding results: %s", err)
 		return
 	}
