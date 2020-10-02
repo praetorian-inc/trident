@@ -41,7 +41,7 @@ type testcase struct {
 
 func TestNozzle(t *testing.T) {
 	noz, err := nozzle.Open("o365", map[string]string{
-		"domain": "login.micrsoft.com",
+		"domain": "login.microsoft.com",
 	})
 	if err != nil {
 		t.Fatalf("unable to open nozzle: %s", err)
