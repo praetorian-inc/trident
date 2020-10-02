@@ -21,7 +21,7 @@ import (
 	"io/ioutil"
 	"net/http"
 //	"os"
-//	"strings"
+	"strings"
 
 //	"github.com/jedib0t/go-pretty/table"
 	log "github.com/sirupsen/logrus"
@@ -59,13 +59,20 @@ func describeGet(cmd *cobra.Command, args []string) {
 	// also "render" the status on the CLI here
 	orchestrator := viper.GetString("orchestrator-url")
 
-	var filter = fmt.Sprintf("{ID:%s}", campaignID) 
+	var flagFilter = fmt.Sprintf("{\"id\":%s}", campaignID) 
 	
+	var filter map[string]interface{}
+	err := json.Unmarshal([]byte(flagFilter), &filter)
+	if err != nil {
+		log.Fatalf("error during JSON unmarshalling: %s", err)
+	}
+
+	fields := strings.Split(strings.ReplaceAll("*", " ", ""), ",")
 
 	// build our request to the orchestrator.
 	// return all fields (*) and the filter is the campaignID
 	requestBody, err := json.Marshal(map[string]interface{}{
-		"ReturnedFields": "*",
+		"ReturnedFields": fields,
 		"Filter":         filter,
 	})
 
@@ -99,17 +106,17 @@ func describeGet(cmd *cobra.Command, args []string) {
 		log.Fatalf("error reading response body: %s", err)
 	}
 	log.Infof("response: %s", respBody)
-	var results []map[string]interface{}
+	var results map[string]interface{}
 
 	err = json.Unmarshal(respBody, &results)
 	if err != nil {
 		log.Fatalf("error parsing response json: %s", err)
 	}
 
-	//if flagOutputFormat == "json" {
-	fmt.Print(string(respBody))
-	//	return
-	//}
+	if flagOutputFormat == "json" {
+		fmt.Print(string(respBody))
+		return
+	}
 
 	
 }
