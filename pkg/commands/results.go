@@ -95,7 +95,6 @@ func resultsGet(cmd *cobra.Command, args []string) {
 		"ReturnedFields": fields,
 		"Filter":         filter,
 	})
-
 	if err != nil {
 		log.Fatalf("error during JSON marshalling for request body: %s", err)
 	}
