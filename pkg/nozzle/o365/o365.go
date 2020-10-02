@@ -47,7 +47,8 @@ func init() {
 func (Driver) New(opts map[string]string) (nozzle.Nozzle, error) {
 	domain, ok := opts["domain"]
 	if !ok {
-		return nil, fmt.Errorf("o365 nozzle require 'domain' config parameter")
+		// domain not specified, using login.microsoft.com as default domain
+		domain = "login.microsoft.com"
 	}
 
 	rl := rate.NewLimiter(rate.Every(300*time.Millisecond), 1)
@@ -73,15 +74,15 @@ type Nozzle struct {
 
 // struct for error response from o365
 type O365Error struct {
-	Error string 				`json:"error"`
-	ErrorDescription string 	`json:"error_description"`
-	ErrorCodes []int32			`json:"error_codes"`
-	Timestamp string			`json:"timestamp"`
-	TraceId string				`json:"trace_id"`
-	CorrelationId string		`json:"correlation_id"`
-	ErrorUri string 			`json:"error_uri"` // string might not be the best type for this
-	Suberror string				`json:",omitempty"` // from 401 response
-	PasswordChangeUrl string	`json:",omitempty"` // from 401 response
+	Error             string  `json:"error"`
+	ErrorDescription  string  `json:"error_description"`
+	ErrorCodes        []int32 `json:"error_codes"`
+	Timestamp         string  `json:"timestamp"`
+	TraceId           string  `json:"trace_id"`
+	CorrelationId     string  `json:"correlation_id"`
+	ErrorUri          string  `json:"error_uri"`  // string might not be the best type for this
+	Suberror          string  `json:",omitempty"` // from 401 response
+	PasswordChangeUrl string  `json:",omitempty"` // from 401 response
 }
 
 var (
@@ -138,48 +139,48 @@ func (n *Nozzle) oauth2TokenLogin(username, password string) (*event.AuthRespons
 		// switching on the AADSTS code
 		// https://docs.microsoft.com/en-us/azure/active-directory/develop/reference-aadsts-error-codes
 		switch code {
-			case "AADSTS50128":
-				// Invalid domain name - No tenant-identifying information found in either the 
-				// request or implied by any provided credentials.
-				return nil, fmt.Errorf("invalid domain name from o365 nozzle.")
-			case "AADSTS50126":
-				// InvalidUserNameOrPassword - Error validating credentials due to 
-				// invalid username or password.
-				// keep default
-			case "AADSTS50079":
-				// UserStrongAuthEnrollmentRequired - Due to a configuration change made 
-				// by the administrator, or because the user moved 
-				// to a new location, the user is required to use multi-factor authentication.
-				mfa = true
-				valid = true
-			case "AADSTS50076":
-				// UserStrongAuthClientAuthNRequired - Due to a 
-				// configuration change made by the admin, or because you moved to a new location, 
-				// the user must use multi-factor authentication to access the resource. Retry with a 
-				// new authorize request for the resource.
-				mfa = true
-				valid = true
-			case "AADSTS50059":
-				// MissingTenantRealmAndNoUserInformationProvided - Tenant-identifying information was not found 
-				// in either the request or implied by any provided credentials. The user can contact 
-				// the tenant admin to help resolve the issue.
-				return nil, fmt.Errorf("MissingTenantRealmAndNoUserInformationProvided error from o365 nozzle.")
-			case "AADSTS50057":
-				// UserDisabled - The user account is disabled. The account has been disabled by an administrator.
-				locked = true
-			case "AADSTS50055":
-				// InvalidPasswordExpiredPassword - The password is expired.
-			case "AADSTS50053":
-				// IdsLocked - The account is locked because the user tried to sign in too many times 
-				// with an incorrect user ID or password.
-				locked = true
-			case "AADSTS50034":
-				// UserAccountNotFound - To sign into this application, the account must be added to the directory.
-			}
+		case "AADSTS50128":
+			// Invalid domain name - No tenant-identifying information found in either the
+			// request or implied by any provided credentials.
+			return nil, fmt.Errorf("invalid domain name from o365 nozzle.")
+		case "AADSTS50126":
+			// InvalidUserNameOrPassword - Error validating credentials due to
+			// invalid username or password.
+			// keep default
+		case "AADSTS50079":
+			// UserStrongAuthEnrollmentRequired - Due to a configuration change made
+			// by the administrator, or because the user moved
+			// to a new location, the user is required to use multi-factor authentication.
+			mfa = true
+			valid = true
+		case "AADSTS50076":
+			// UserStrongAuthClientAuthNRequired - Due to a
+			// configuration change made by the admin, or because you moved to a new location,
+			// the user must use multi-factor authentication to access the resource. Retry with a
+			// new authorize request for the resource.
+			mfa = true
+			valid = true
+		case "AADSTS50059":
+			// MissingTenantRealmAndNoUserInformationProvided - Tenant-identifying information was not found
+			// in either the request or implied by any provided credentials. The user can contact
+			// the tenant admin to help resolve the issue.
+			return nil, fmt.Errorf("MissingTenantRealmAndNoUserInformationProvided error from o365 nozzle.")
+		case "AADSTS50057":
+			// UserDisabled - The user account is disabled. The account has been disabled by an administrator.
+			locked = true
+		case "AADSTS50055":
+			// InvalidPasswordExpiredPassword - The password is expired.
+		case "AADSTS50053":
+			// IdsLocked - The account is locked because the user tried to sign in too many times
+			// with an incorrect user ID or password.
+			locked = true
+		case "AADSTS50034":
+			// UserAccountNotFound - To sign into this application, the account must be added to the directory.
+		}
 		return &event.AuthResponse{
-			Valid: valid,
+			Valid:  valid,
 			Locked: locked,
-			MFA: mfa,
+			MFA:    mfa,
 			Metadata: map[string]interface{}{
 				"O365Error": res,
 			},
