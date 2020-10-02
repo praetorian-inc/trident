@@ -147,6 +147,7 @@ func (s *Server) CampaignListHandler(w http.ResponseWriter, r *http.Request) {
 func (s *Server) CampaignDescribeHandler(w http.ResponseWriter, r *http.Request) {
 	log.Info("retrieving description of queried campaign")
 	var q db.Query
+	var campaign Campaign
 
 	err := parse.DecodeJSONBody(w, r, &q)
 	if err != nil {
@@ -164,18 +165,18 @@ func (s *Server) CampaignDescribeHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	results, err := s.DB.DescribeCampaign(q)
+	campaign, err := s.DB.DescribeCampaign(q)
 	if err != nil {
 		message := fmt.Sprintf("there was an error collecting results from the database: %s", err)
 		log.Error(message)
 		http.Error(w, message, http.StatusInternalServerError)
 	}
 
-	err = json.NewEncoder(w).Encode(&results)
+	err = json.NewEncoder(w).Encode(&campaign)
 	if err != nil {
 		log.WithFields(log.Fields{
-			"results": results,
-		}).Errorf("error encoding results: %s", err)
+			"campaign": campaign,
+		}).Errorf("error encoding campaign: %s", err)
 		return
 	}
 }
