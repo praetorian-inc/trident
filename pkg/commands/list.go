@@ -17,13 +17,13 @@ package commands
 import (
 //	"bytes"
 	"encoding/json"
-	"fmt"
+//	"fmt"
 	"io/ioutil"
 	"net/http"
-//	"os"
+	"os"
 //	"strings"
 
-//	"github.com/jedib0t/go-pretty/table"
+	"github.com/jedib0t/go-pretty/table"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -37,6 +37,19 @@ var listCmd = &cobra.Command{
 		listGet(cmd, args)
 	},
 }
+
+// these are the displayed header values for the output table
+var ListTableHeaderNames = []string{
+		"campaign id",
+		"domain",
+		"creation date",
+	}
+
+var ListTableHeaderFields = []string{
+		"id",
+		"provider_metadata",
+		"created_at",
+	}
 
 func init() {
 	// todo: implement the command line argument handling here
@@ -76,7 +89,7 @@ func listGet(cmd *cobra.Command, args []string) {
 		log.Fatalf("error reading response body: %s", err)
 	}
 
-	log.Infof("GET response: %s", respBody)
+	// log.Infof("GET response: %s", respBody)
 
 	var results []map[string]interface{}
 
@@ -85,8 +98,38 @@ func listGet(cmd *cobra.Command, args []string) {
 		log.Fatalf("error parsing response json: %s", err)
 	}
 
-	//if flagOutputFormat == "json" {
-	fmt.Print(string(respBody))
-	//	return
-	//}
+	t := table.NewWriter()
+	t.SetOutputMirror(os.Stdout)
+
+	header := make(table.Row, 0, len(ListTableHeaderNames))
+	for _, field := range ListTableHeaderNames {
+		header = append(header, field)
+	}
+	t.AppendHeader(header)
+
+	for _, result := range results {
+		var row table.Row
+		for _, field := range ListTableHeaderFields {
+
+			if(field == "provider_metadata" && result["provider_metadata"] != nil) {
+				
+				v, ok := result["provider_metadata"].(map[string]interface{})["domain"]
+
+				if !ok { log.Fatal("there was an error retrieving results from the map") }
+				row = append(row, v)
+			} else {
+				v, ok := result[field]
+				if !ok { log.Fatal("there was an error retrieving results from the map") }
+				row = append(row, v)
+			}
+		}
+		t.AppendRows([]table.Row{row})
+	}
+
+	if flagOutputFormat == "csv" {
+		t.RenderCSV()
+		return
+	}
+
+	t.Render()
 }
