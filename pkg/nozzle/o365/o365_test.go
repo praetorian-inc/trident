@@ -53,6 +53,8 @@ func TestNozzle(t *testing.T) {
 	usernameMFA := "test5@tridentcontoso.onmicrosoft.com"
 	passwordMFA := "ItsAutumn20205!"
 
+	attemptsBeforeLockout := 10
+
 	var testcases = []testcase{
 		{
 			desc:     "invalid login",
@@ -80,6 +82,7 @@ func TestNozzle(t *testing.T) {
 		},
 	}
 
+	// Normal test cases
 	for _, test := range testcases {
 		res, err := noz.Login(test.username, test.password)
 		if err != nil {
@@ -97,4 +100,56 @@ func TestNozzle(t *testing.T) {
 		}
 	}
 
+	var beforeLockout = testcase{
+		desc:     "invalid login, pre-lockout",
+		username: username,
+		password: "Invalid1!",
+		valid:    false,
+		mfa:      false,
+		locked:   false,
+	}
+
+	var afterLockout = testcase{
+		desc:     "invalid login, post-lockout",
+		username: username,
+		password: "Invalid1!",
+		valid:    false,
+		mfa:      false,
+		locked:   true,
+	}
+
+	// Test for account lockout
+	for attempt := 0; attempt < attemptsBeforeLockout; attempt++ {
+		res, err := noz.Login(beforeLockout.username, beforeLockout.password)
+		if err != nil {
+			t.Errorf("error in login: %s", err)
+			continue
+		}
+		if res.Valid != beforeLockout.valid {
+			t.Errorf("[%s] noz.valid was %t, expected %t", beforeLockout.desc, res.Valid, beforeLockout.valid)
+		}
+		if res.MFA != beforeLockout.mfa {
+			t.Errorf("[%s] noz.mfa %t, expected %t", beforeLockout.desc, res.MFA, beforeLockout.mfa)
+		}
+		if res.Locked != beforeLockout.locked {
+			t.Errorf("[%s] noz.locked %t, expected %t on attempt %d", beforeLockout.desc, res.Locked, beforeLockout.locked, attempt)
+		}
+	}
+
+	res, err := noz.Login(afterLockout.username, afterLockout.password)
+	if err != nil {
+		t.Errorf("error in login: %s", err)
+	} else {
+		if res.Valid != afterLockout.valid {
+			t.Errorf("[%s] noz.valid was %t, expected %t", afterLockout.desc, res.Valid, afterLockout.valid)
+		}
+		if res.MFA != afterLockout.mfa {
+			t.Errorf("[%s] noz.mfa %t, expected %t", afterLockout.desc, res.MFA, afterLockout.mfa)
+		}
+		if res.Locked != afterLockout.locked {
+			t.Errorf("[%s] noz.locked %t, expected %t after attempts %d", afterLockout.desc, res.Locked, afterLockout.locked, attemptsBeforeLockout)
+		}
+	}
+
+	return
 }
