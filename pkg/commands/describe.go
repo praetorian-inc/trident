@@ -43,6 +43,7 @@ var describeCmd = &cobra.Command{
 	},
 }
 
+
 func init() {
 	// todo: implement the command line argument handling here
 	describeCmd.Flags().StringVarP(&campaignID, "campaign", "c", "*",
@@ -54,7 +55,6 @@ func init() {
 // describeGet will retrieve the parameters that make up the given campaign
 // and print the parameters to the CLI
 func describeGet(cmd *cobra.Command, args []string) {
-	log.Infof("campaign id: %s", campaignID)
 	// todo: implement the orchestrator/POST requests to handle accessing the campaign DB
 	// also "render" the status on the CLI here
 	orchestrator := viper.GetString("orchestrator-url")
@@ -76,7 +76,7 @@ func describeGet(cmd *cobra.Command, args []string) {
 		"Filter":         filter,
 	})
 
-	log.Infof("request body: %s", requestBody)
+	// log.Infof("request body: %s", requestBody)
 
 	if err != nil {
 		log.Fatalf("error during JSON marshalling for request body: %s", err)
@@ -105,7 +105,7 @@ func describeGet(cmd *cobra.Command, args []string) {
 	if err != nil {
 		log.Fatalf("error reading response body: %s", err)
 	}
-	log.Infof("response: %s", respBody)
+	// log.Infof("response: %s", respBody)
 	var results map[string]interface{}
 
 	err = json.Unmarshal(respBody, &results)
@@ -113,10 +113,27 @@ func describeGet(cmd *cobra.Command, args []string) {
 		log.Fatalf("error parsing response json: %s", err)
 	}
 
-	if flagOutputFormat == "json" {
-		fmt.Print(string(respBody))
-		return
-	}
+	startTime := results["not_before"]
+	endTime := results["not_after"]
+	numUsers := len(results["users"].([]interface{}))
+	numPasswords := len(results["passwords"].([]interface{}))
+	provider := results["provider"]
+	//domain := results["provider_metadata"].(map[string]interface{})["domain"]
+
+
+	// log.Infof("start time: %s ; end time: %s", startTime, endTime)
+	// log.Infof("num users: %d ; num passwords: %d", numUsers, numPasswords)
+	// log.Infof("provider: %s ; domain: %s", provider, domain)
+
+	fmt.Printf("-------------------------------------------\n")
+	fmt.Printf("Campaign #%s Parameters:\n", campaignID)
+	fmt.Printf("-------------------------------------------\n")
+	fmt.Printf("Start Time:     %s\n", startTime)
+	fmt.Printf("End Time:       %s\n", endTime)
+	fmt.Printf("User Count:     %d\n", numUsers)
+	fmt.Printf("Password Count: %d\n", numPasswords)
+	fmt.Printf("Provider:       %s\n", provider)
+	
 
 	
 }
