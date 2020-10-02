@@ -151,12 +151,14 @@ func (n *Nozzle) oauth2TokenLogin(username, password string) (*event.AuthRespons
 				// by the administrator, or because the user moved 
 				// to a new location, the user is required to use multi-factor authentication.
 				mfa = true
+				valid = true
 			case "AADSTS50076":
 				// UserStrongAuthClientAuthNRequired - Due to a 
 				// configuration change made by the admin, or because you moved to a new location, 
 				// the user must use multi-factor authentication to access the resource. Retry with a 
 				// new authorize request for the resource.
 				mfa = true
+				valid = true
 			case "AADSTS50059":
 				// MissingTenantRealmAndNoUserInformationProvided - Tenant-identifying information was not found 
 				// in either the request or implied by any provided credentials. The user can contact 
