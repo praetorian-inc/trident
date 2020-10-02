@@ -147,7 +147,7 @@ func TestNozzle(t *testing.T) {
 			t.Errorf("[%s] noz.mfa %t, expected %t", afterLockout.desc, res.MFA, afterLockout.mfa)
 		}
 		if res.Locked != afterLockout.locked {
-			t.Errorf("[%s] noz.locked %t, expected %t after attempts %d", afterLockout.desc, res.Locked, afterLockout.locked, attemptsBeforeLockout)
+			t.Errorf("[%s] noz.locked %t, expected %t after %d attempts", afterLockout.desc, res.Locked, afterLockout.locked, attemptsBeforeLockout)
 		}
 	}
 
