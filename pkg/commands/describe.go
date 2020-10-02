@@ -45,9 +45,9 @@ var describeCmd = &cobra.Command{
 
 
 func init() {
-	// todo: implement the command line argument handling here
-	describeCmd.Flags().StringVarP(&campaignID, "campaign", "c", "*",
+	describeCmd.Flags().StringVarP(&campaignID, "campaign", "c", "1",
 		"the identifier of the campaign.")
+	describeCmd.MarkFlagRequired("campaign")
 
 	rootCmd.AddCommand(describeCmd)
 }
@@ -55,8 +55,6 @@ func init() {
 // describeGet will retrieve the parameters that make up the given campaign
 // and print the parameters to the CLI
 func describeGet(cmd *cobra.Command, args []string) {
-	// todo: implement the orchestrator/POST requests to handle accessing the campaign DB
-	// also "render" the status on the CLI here
 	orchestrator := viper.GetString("orchestrator-url")
 
 	var flagFilter = fmt.Sprintf("{\"id\":%s}", campaignID) 
@@ -67,16 +65,12 @@ func describeGet(cmd *cobra.Command, args []string) {
 		log.Fatalf("error during JSON unmarshalling: %s", err)
 	}
 
-	//fields := strings.Split(strings.ReplaceAll("*", " ", ""), ",")
-
 	// build our request to the orchestrator.
 	// return all fields (*) and the filter is the campaignID
 	requestBody, err := json.Marshal(map[string]interface{}{
 		//"ReturnedFields": fields,
 		"Filter":         filter,
 	})
-
-	// log.Infof("request body: %s", requestBody)
 
 	if err != nil {
 		log.Fatalf("error during JSON marshalling for request body: %s", err)
@@ -120,10 +114,6 @@ func describeGet(cmd *cobra.Command, args []string) {
 	provider := results["provider"]
 	//domain := results["provider_metadata"].(map[string]interface{})["domain"]
 
-
-	// log.Infof("start time: %s ; end time: %s", startTime, endTime)
-	// log.Infof("num users: %d ; num passwords: %d", numUsers, numPasswords)
-	// log.Infof("provider: %s ; domain: %s", provider, domain)
 
 	fmt.Printf("-------------------------------------------\n")
 	fmt.Printf("Campaign #%s Parameters:\n", campaignID)
