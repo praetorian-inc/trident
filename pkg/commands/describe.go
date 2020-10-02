@@ -21,7 +21,7 @@ import (
 	"io/ioutil"
 	"net/http"
 //	"os"
-//	"strings"
+	"strings"
 
 //	"github.com/jedib0t/go-pretty/table"
 	log "github.com/sirupsen/logrus"
@@ -101,6 +101,12 @@ func describeGet(cmd *cobra.Command, args []string) {
 	}
 	// log.Infof("response: %s", respBody)
 	var results map[string]interface{}
+
+	if(strings.Contains(string(respBody), "there was an error collecting results from the database: record not found")) {
+		fmt.Printf("Unable to find campgin with ID of %s\n", campaignID)
+		log.Fatalf("campaign ID not found: %s", campaignID)
+		return
+	}
 
 	err = json.Unmarshal(respBody, &results)
 	if err != nil {
