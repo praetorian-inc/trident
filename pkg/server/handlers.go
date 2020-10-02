@@ -147,7 +147,7 @@ func (s *Server) CampaignListHandler(w http.ResponseWriter, r *http.Request) {
 func (s *Server) CampaignDescribeHandler(w http.ResponseWriter, r *http.Request) {
 	log.Info("retrieving description of queried campaign")
 	var q db.Query
-	var campaign Campaign
+	var campaign db.Campaign
 
 	err := parse.DecodeJSONBody(w, r, &q)
 	if err != nil {
