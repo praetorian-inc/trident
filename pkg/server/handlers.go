@@ -165,7 +165,7 @@ func (s *Server) CampaignDescribeHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	campaign, err := s.DB.DescribeCampaign(q)
+	campaign, err = s.DB.DescribeCampaign(q)
 	if err != nil {
 		message := fmt.Sprintf("there was an error collecting results from the database: %s", err)
 		log.Error(message)
