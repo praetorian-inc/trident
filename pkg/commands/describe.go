@@ -21,7 +21,7 @@ import (
 	"io/ioutil"
 	"net/http"
 //	"os"
-	"strings"
+//	"strings"
 
 //	"github.com/jedib0t/go-pretty/table"
 	log "github.com/sirupsen/logrus"
@@ -67,12 +67,12 @@ func describeGet(cmd *cobra.Command, args []string) {
 		log.Fatalf("error during JSON unmarshalling: %s", err)
 	}
 
-	fields := strings.Split(strings.ReplaceAll("*", " ", ""), ",")
+	//fields := strings.Split(strings.ReplaceAll("*", " ", ""), ",")
 
 	// build our request to the orchestrator.
 	// return all fields (*) and the filter is the campaignID
 	requestBody, err := json.Marshal(map[string]interface{}{
-		"ReturnedFields": fields,
+		//"ReturnedFields": fields,
 		"Filter":         filter,
 	})
 

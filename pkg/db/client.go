@@ -244,7 +244,7 @@ func (t *TridentDB) ListCampaign() ([]Campaign, error) {
 func (t *TridentDB) DescribeCampaign(query Query) (Campaign, error) {
 	var campaign Campaign
 
-	err := t.db.Where(query).Find(&campaign).
+	err := t.db.Where(query.Filter).Find(&campaign).
 		Error
 	if err != nil {
 		return campaign, err
