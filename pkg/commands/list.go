@@ -50,7 +50,8 @@ var listTableHeaderFields = []string{
 }
 
 func init() {
-	rootCmd.AddCommand(listCmd)
+	//rootCmd.AddCommand(listCmd)
+	campaignCreateCmd.AddCommand(listCmd)
 }
 
 // listGet will retrieve a list of the currently tracked campaigns
