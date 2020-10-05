@@ -15,13 +15,10 @@
 package commands
 
 import (
-//	"bytes"
 	"encoding/json"
-//	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
-//	"strings"
 
 	"github.com/jedib0t/go-pretty/table"
 	log "github.com/sirupsen/logrus"
@@ -38,32 +35,27 @@ var listCmd = &cobra.Command{
 	},
 }
 
-// these are the displayed header values for the output table
-var ListTableHeaderNames = []string{
-		"campaign id",
-		"domain",
-		"creation date",
-	}
-
-var ListTableHeaderFields = []string{
-		"id",
-		"provider_metadata",
-		"created_at",
-	}
-
-func init() {
-	// todo: implement the command line argument handling here
-	// or maybe there's nothing to do here, I don't think `list` takes any
-	// special args. it just... lists
-	rootCmd.AddCommand(listCmd)
+var listTableHeaderNames = []string{
+	"campaign id",
+	"provider",
+	"metadata",
+	"creation date",
 }
 
+var listTableHeaderFields = []string{
+	"id",
+	"provider",
+	"provider_metadata",
+	"created_at",
+}
+
+func init() {
+	rootCmd.AddCommand(listCmd)
+}
 
 // listGet will retrieve a list of the currently tracked campaigns
 // and print that list to the CLI
 func listGet(cmd *cobra.Command, args []string) {
-	// todo: implement the orchestrator/POST requests to handle accessing the campaign DB
-	// also "render" the list of campaigns on the CLI here
 	orchestrator := viper.GetString("orchestrator-url")
 
 	req, err := http.NewRequest("GET", orchestrator+"/list", nil)
@@ -89,10 +81,7 @@ func listGet(cmd *cobra.Command, args []string) {
 		log.Fatalf("error reading response body: %s", err)
 	}
 
-	// log.Infof("GET response: %s", respBody)
-
 	var results []map[string]interface{}
-
 	err = json.Unmarshal(respBody, &results)
 	if err != nil {
 		log.Fatalf("error parsing response json: %s", err)
@@ -101,27 +90,20 @@ func listGet(cmd *cobra.Command, args []string) {
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
 
-	header := make(table.Row, 0, len(ListTableHeaderNames))
-	for _, field := range ListTableHeaderNames {
+	header := make(table.Row, 0, len(listTableHeaderNames))
+	for _, field := range listTableHeaderNames {
 		header = append(header, field)
 	}
 	t.AppendHeader(header)
 
 	for _, result := range results {
 		var row table.Row
-		for _, field := range ListTableHeaderFields {
-
-			if(field == "provider_metadata" && result["provider_metadata"] != nil) {
-				
-				v, ok := result["provider_metadata"].(map[string]interface{})["domain"]
-
-				if !ok { log.Fatal("there was an error retrieving results from the map") }
-				row = append(row, v)
-			} else {
-				v, ok := result[field]
-				if !ok { log.Fatal("there was an error retrieving results from the map") }
-				row = append(row, v)
+		for _, field := range listTableHeaderFields {
+			v, ok := result[field]
+			if !ok {
+				log.Fatal("there was an error retrieving results from the map")
 			}
+			row = append(row, v)
 		}
 		t.AppendRows([]table.Row{row})
 	}

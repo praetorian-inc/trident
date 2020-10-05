@@ -131,8 +131,6 @@ func (s *Server) CampaignListHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, message, http.StatusInternalServerError)
 	}
 
-	log.Infof("campaigns: %s", campaigns)
-
 	err = json.NewEncoder(w).Encode(&campaigns)
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -180,7 +178,3 @@ func (s *Server) CampaignDescribeHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 }
-
-
-
-

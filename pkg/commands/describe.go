@@ -18,12 +18,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
-//	"os"
-	"strings"
 
-//	"github.com/jedib0t/go-pretty/table"
+	"github.com/praetorian-inc/trident/pkg/db"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -43,11 +41,13 @@ var describeCmd = &cobra.Command{
 	},
 }
 
-
 func init() {
 	describeCmd.Flags().StringVarP(&campaignID, "campaign", "c", "1",
 		"the identifier of the campaign.")
-	describeCmd.MarkFlagRequired("campaign")
+	err := describeCmd.MarkFlagRequired("campaign")
+	if err != nil {
+		log.Fatalf("issue during argument parsing: %s", err)
+	}
 
 	rootCmd.AddCommand(describeCmd)
 }
@@ -57,8 +57,8 @@ func init() {
 func describeGet(cmd *cobra.Command, args []string) {
 	orchestrator := viper.GetString("orchestrator-url")
 
-	var flagFilter = fmt.Sprintf("{\"id\":%s}", campaignID) 
-	
+	var flagFilter = fmt.Sprintf("{\"id\":%s}", campaignID)
+
 	var filter map[string]interface{}
 	err := json.Unmarshal([]byte(flagFilter), &filter)
 	if err != nil {
@@ -68,10 +68,8 @@ func describeGet(cmd *cobra.Command, args []string) {
 	// build our request to the orchestrator.
 	// return all fields (*) and the filter is the campaignID
 	requestBody, err := json.Marshal(map[string]interface{}{
-		//"ReturnedFields": fields,
-		"Filter":         filter,
+		"Filter": filter,
 	})
-
 	if err != nil {
 		log.Fatalf("error during JSON marshalling for request body: %s", err)
 	}
@@ -94,42 +92,23 @@ func describeGet(cmd *cobra.Command, args []string) {
 	defer resp.Body.Close() // nolint:errcheck
 
 	// handle the results from the server
-	
-	respBody, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatalf("error reading response body: %s", err)
-	}
-	// log.Infof("response: %s", respBody)
-	var results map[string]interface{}
-
-	if(strings.Contains(string(respBody), "there was an error collecting results from the database: record not found")) {
-		fmt.Printf("Unable to find campgin with ID of %s\n", campaignID)
-		log.Fatalf("campaign ID not found: %s", campaignID)
-		return
+	if resp.StatusCode != 200 {
+		log.Fatalf("error returning results from server: %d", resp.StatusCode)
 	}
 
-	err = json.Unmarshal(respBody, &results)
+	var campaign db.Campaign
+	err = json.NewDecoder(resp.Body).Decode(&campaign)
 	if err != nil {
 		log.Fatalf("error parsing response json: %s", err)
 	}
 
-	startTime := results["not_before"]
-	endTime := results["not_after"]
-	numUsers := len(results["users"].([]interface{}))
-	numPasswords := len(results["passwords"].([]interface{}))
-	provider := results["provider"]
-	//domain := results["provider_metadata"].(map[string]interface{})["domain"]
-
-
 	fmt.Printf("-------------------------------------------\n")
 	fmt.Printf("Campaign #%s Parameters:\n", campaignID)
 	fmt.Printf("-------------------------------------------\n")
-	fmt.Printf("Start Time:     %s\n", startTime)
-	fmt.Printf("End Time:       %s\n", endTime)
-	fmt.Printf("User Count:     %d\n", numUsers)
-	fmt.Printf("Password Count: %d\n", numPasswords)
-	fmt.Printf("Provider:       %s\n", provider)
-	
-
-	
+	fmt.Printf("Start Time:     %s\n", campaign.NotBefore)
+	fmt.Printf("End Time:       %s\n", campaign.NotAfter)
+	fmt.Printf("User Count:     %d\n", len(campaign.Users))
+	fmt.Printf("Password Count: %d\n", len(campaign.Passwords))
+	fmt.Printf("Provider:       %s\n", campaign.Provider)
+	fmt.Printf("Metadata:       %s\n", campaign.ProviderMetadata)
 }

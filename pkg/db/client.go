@@ -227,13 +227,12 @@ func (t *TridentDB) StreamingInsertResults() chan *Result {
 	return results
 }
 
-
+// ListCampaign queries metadata from the list of all campaigns.
 func (t *TridentDB) ListCampaign() ([]Campaign, error) {
 	var campaigns []Campaign
 
-	err := t.db.Select([]string{"id", "provider_metadata", "created_at"}).
-		Find(&campaigns).
-		Error
+	err := t.db.Select([]string{"id", "provider", "provider_metadata", "created_at"}).
+		Find(&campaigns).Error
 	if err != nil {
 		return nil, err
 	}
@@ -241,19 +240,14 @@ func (t *TridentDB) ListCampaign() ([]Campaign, error) {
 	return campaigns, nil
 }
 
+// DescribeCampaign queries all data about a specific campaign.
 func (t *TridentDB) DescribeCampaign(query Query) (Campaign, error) {
 	var campaign Campaign
 
-	err := t.db.Where(query.Filter).Find(&campaign).
-		Error
+	err := t.db.Where(query.Filter).Find(&campaign).Error
 	if err != nil {
 		return campaign, err
 	}
 
 	return campaign, nil
 }
-
-
-
-
-
