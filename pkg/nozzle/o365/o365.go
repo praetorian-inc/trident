@@ -134,8 +134,11 @@ func (n *Nozzle) oauth2TokenLogin(username, password string) (*event.AuthRespons
 		locked := false
 		// extract AADST code supplied in error_description
 		re := regexp.MustCompile("(AADSTS.*?):")
-		re_matches := re.FindStringSubmatch(res.ErrorDescription)
-		code := strings.TrimRight(re_matches[1], ":")
+		matches := re.FindStringSubmatch(res.ErrorDescription)
+		if len(matches) == 0 {
+			return nil, fmt.Errorf("unhandled error description: %s", res.ErrorDescription)
+		}
+		code := strings.TrimRight(matches[1], ":")
 		// switching on the AADSTS code
 		// https://docs.microsoft.com/en-us/azure/active-directory/develop/reference-aadsts-error-codes
 		switch code {
