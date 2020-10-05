@@ -49,7 +49,6 @@ func init() {
 		log.Fatalf("issue during argument parsing: %s", err)
 	}
 
-	//rootCmd.AddCommand(describeCmd)
 	campaignCreateCmd.AddCommand(describeCmd)
 }
 

@@ -50,7 +50,6 @@ var listTableHeaderFields = []string{
 }
 
 func init() {
-	//rootCmd.AddCommand(listCmd)
 	campaignCreateCmd.AddCommand(listCmd)
 }
 
