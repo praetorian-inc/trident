@@ -21,6 +21,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/praetorian-inc/trident/pkg/event"
 	"github.com/praetorian-inc/trident/pkg/nozzle"
 )
 
@@ -83,8 +84,9 @@ func TestNozzle(t *testing.T) {
 	}
 
 	// Normal test cases
+	var res *event.AuthResponse
 	for _, test := range testcases {
-		res, err := noz.Login(test.username, test.password)
+		res, err = noz.Login(test.username, test.password)
 		if err != nil {
 			t.Errorf("error in login: %s", err)
 			continue
@@ -120,7 +122,7 @@ func TestNozzle(t *testing.T) {
 
 	// Test for account lockout
 	for attempt := 0; attempt < attemptsBeforeLockout; attempt++ {
-		res, err := noz.Login(beforeLockout.username, beforeLockout.password)
+		res, err = noz.Login(beforeLockout.username, beforeLockout.password)
 		if err != nil {
 			t.Errorf("error in login: %s", err)
 			continue
@@ -136,7 +138,7 @@ func TestNozzle(t *testing.T) {
 		}
 	}
 
-	res, err := noz.Login(afterLockout.username, afterLockout.password)
+	res, err = noz.Login(afterLockout.username, afterLockout.password)
 	if err != nil {
 		t.Errorf("error in login: %s", err)
 	} else {
@@ -153,6 +155,4 @@ func TestNozzle(t *testing.T) {
 			t.Errorf("[%s] noz.locked %t, expected %t after %d attempts", afterLockout.desc, res.Locked, afterLockout.locked, attemptsBeforeLockout)
 		}*/
 	}
-
-	return
 }

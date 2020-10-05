@@ -44,6 +44,13 @@ func init() {
 	nozzle.Register("o365", Driver{})
 }
 
+// New is used to create an o365 nozzle and accepts the following configuration
+// options:
+//
+// domain
+//
+// The domain to send oauth requests to. This defaults to login.microsoft.com and
+// is unlikely to require configuration.
 func (Driver) New(opts map[string]string) (nozzle.Nozzle, error) {
 	domain, ok := opts["domain"]
 	if !ok {
@@ -60,6 +67,7 @@ func (Driver) New(opts map[string]string) (nozzle.Nozzle, error) {
 	}, nil
 }
 
+// Nozzle implements the nozzle.Nozzle interface for o365.
 type Nozzle struct {
 	// Domain is the O365 domain
 	// "login.microsoft.com" for example
@@ -73,23 +81,20 @@ type Nozzle struct {
 }
 
 // struct for error response from o365
-type O365Error struct {
+type o365Error struct {
 	Error             string  `json:"error"`
 	ErrorDescription  string  `json:"error_description"`
 	ErrorCodes        []int32 `json:"error_codes"`
 	Timestamp         string  `json:"timestamp"`
-	TraceId           string  `json:"trace_id"`
-	CorrelationId     string  `json:"correlation_id"`
-	ErrorUri          string  `json:"error_uri"`  // string might not be the best type for this
+	TraceID           string  `json:"trace_id"`
+	CorrelationID     string  `json:"correlation_id"`
+	ErrorURI          string  `json:"error_uri"`  // string might not be the best type for this
 	Suberror          string  `json:",omitempty"` // from 401 response
-	PasswordChangeUrl string  `json:",omitempty"` // from 401 response
+	PasswordChangeURL string  `json:",omitempty"` // from 401 response
 }
 
 var (
-	oauth2AuthURL  = "https://%s/common/oauth2/authorize"
-	oauth2TokenURL = "https://%s/common/oauth2/token"
-	// Need to see if there's a better resource/client_id to use for this
-	// But for now, graph.windows.net should work
+	oauth2TokenURL  = "https://%s/common/oauth2/token" // nolint:gosec
 	oauth2TokenBody = "grant_type=password" +
 		"&resource=https://graph.windows.net" +
 		"&client_id=1b730954-1685-4b74-9bfd-dac224a7b894" +
@@ -123,7 +128,7 @@ func (n *Nozzle) oauth2TokenLogin(username, password string) (*event.AuthRespons
 	// a 400 does not necessarily indicate a failure, we need to check
 	// the response body to be sure
 	case 400, 401:
-		var res O365Error
+		var res o365Error
 		err = json.NewDecoder(resp.Body).Decode(&res)
 		if err != nil {
 			return nil, err
@@ -145,7 +150,7 @@ func (n *Nozzle) oauth2TokenLogin(username, password string) (*event.AuthRespons
 		case "AADSTS50128":
 			// Invalid domain name - No tenant-identifying information found in either the
 			// request or implied by any provided credentials.
-			return nil, fmt.Errorf("invalid domain name from o365 nozzle.")
+			return nil, fmt.Errorf("invalid domain name from o365 nozzle")
 		case "AADSTS50126":
 			// InvalidUserNameOrPassword - Error validating credentials due to
 			// invalid username or password.
@@ -167,7 +172,7 @@ func (n *Nozzle) oauth2TokenLogin(username, password string) (*event.AuthRespons
 			// MissingTenantRealmAndNoUserInformationProvided - Tenant-identifying information was not found
 			// in either the request or implied by any provided credentials. The user can contact
 			// the tenant admin to help resolve the issue.
-			return nil, fmt.Errorf("MissingTenantRealmAndNoUserInformationProvided error from o365 nozzle.")
+			return nil, fmt.Errorf("tenant identifying info was not found")
 		case "AADSTS50057":
 			// UserDisabled - The user account is disabled. The account has been disabled by an administrator.
 			locked = true
@@ -185,7 +190,7 @@ func (n *Nozzle) oauth2TokenLogin(username, password string) (*event.AuthRespons
 			Locked: locked,
 			MFA:    mfa,
 			Metadata: map[string]interface{}{
-				"O365Error": res,
+				"o365Error": res,
 			},
 		}, nil
 	}
@@ -193,6 +198,9 @@ func (n *Nozzle) oauth2TokenLogin(username, password string) (*event.AuthRespons
 	return nil, fmt.Errorf("unhandled status code from o365 oauth2 token login: %d", resp.StatusCode)
 }
 
+// Login fulfils the nozzle.Nozzle interface and performs an authentication
+// requests against o365. This function supports rate limiting and parses valid,
+// invalid, and locked out responses.
 func (n *Nozzle) Login(username, password string) (*event.AuthResponse, error) {
 	ctx := context.Background()
 	err := n.RateLimiter.Wait(ctx)
