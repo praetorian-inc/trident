@@ -90,18 +90,18 @@ var (
 	oauth2TokenURL = "https://%s/common/oauth2/token"
 	// Need to see if there's a better resource/client_id to use for this
 	// But for now, graph.windows.net should work
-	ouath2TokenBody = `grant_type=password
-	&resource=https://graph.windows.net
-	&client_id=1b730954-1685-4b74-9bfd-dac224a7b894
-	&lient_info=1
-	&username=%s
-	&password=%s
-	&scope=openid`
+	oauth2TokenBody = "grant_type=password" +
+		"&resource=https://graph.windows.net" +
+		"&client_id=1b730954-1685-4b74-9bfd-dac224a7b894" +
+		"&lient_info=1" +
+		"&username=%s" +
+		"&password=%s" +
+		"&scope=openid"
 )
 
 func (n *Nozzle) oauth2TokenLogin(username, password string) (*event.AuthResponse, error) {
 	url := fmt.Sprintf(oauth2TokenURL, n.Domain)
-	body := fmt.Sprintf(ouath2TokenBody, username, password)
+	body := fmt.Sprintf(oauth2TokenBody, username, password)
 
 	req, _ := http.NewRequest("POST", url, strings.NewReader(body))
 	req.Header.Add("Accept", "application/json")
@@ -133,7 +133,7 @@ func (n *Nozzle) oauth2TokenLogin(username, password string) (*event.AuthRespons
 		mfa := false
 		locked := false
 		// extract AADST code supplied in error_description
-		re := regexp.MustCompile("(.*?):")
+		re := regexp.MustCompile("(AADSTS.*?):")
 		re_matches := re.FindStringSubmatch(res.ErrorDescription)
 		code := strings.TrimRight(re_matches[1], ":")
 		// switching on the AADSTS code
