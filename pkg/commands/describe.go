@@ -49,7 +49,7 @@ func init() {
 		log.Fatalf("issue during argument parsing: %s", err)
 	}
 
-	campaignCreateCmd.AddCommand(describeCmd)
+	campaignCmd.AddCommand(describeCmd)
 }
 
 // describeGet will retrieve the parameters that make up the given campaign
