@@ -28,10 +28,8 @@ import (
 )
 
 const (
-	// CacheKey is the Redis key used to store the task set.
-	CacheKey  = "tasks"
-	CacheKeyF = "campaign%d.tasks"
-	CacheKeyR = "campaign*.tasks" // CacheKey format string for the redis Scan function
+	CacheKeyF = "campaign%d.tasks" // CacheKey format string for normal sprintf use
+	CacheKeyR = "campaign*.tasks"  // CacheKey format string for the redis Scan function
 )
 
 // Scheduler is an interface which wraps several scheduling functions together.
@@ -128,9 +126,10 @@ func (s *PubSubScheduler) popTask(task *db.Task) error {
 
 	var minKey string
 	var minNotBefore float64
+	var minTask []redis.Z
 	// track lowest NotBefore time across all campaigns
 	for _, key := range campaignKeys {
-		minTask, err := s.cache.ZRangeWithScores(key, 0, 0).Result()
+		minTask, err = s.cache.ZRangeWithScores(key, 0, 0).Result()
 		if err != nil {
 			return err
 		}
@@ -144,7 +143,8 @@ func (s *PubSubScheduler) popTask(task *db.Task) error {
 
 	// per weems' suggestion, we may be able to decrease the block
 	// time on this
-	z, err := s.cache.BZPopMin(5*time.Second, minKey).Result()
+	var z *redis.ZWithKey
+	z, err = s.cache.BZPopMin(5*time.Second, minKey).Result()
 	if err != nil {
 		return err
 	}
