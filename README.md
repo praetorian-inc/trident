@@ -45,7 +45,13 @@ API), and a Cloudflare Access configuration for this domain. Cloudflare Access i
 used to authenticate requests to the orchestrator API.
 
 ```bash
+brew install cloudflare/cloudflare/cloudflared
+brew install terraform
+```
+
+```bash
 cd terraform
+cloudflared login
 terraform init
 terraform plan
 terraform apply
