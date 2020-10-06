@@ -105,27 +105,12 @@ func NewPubSubScheduler(opts Options) (*PubSubScheduler, error) {
 	}, nil
 }
 
-/*func (s *PubSubScheduler) pushTask(task *db.Task) error {
-	return s.cache.ZAdd(CacheKey, &redis.Z{
-		Score:  float64(task.NotBefore.UnixNano()),
-		Member: task,
-	}).Err()
-}*/
-
 func (s *PubSubScheduler) pushCampaignTask(task *db.Task, campaignID uint) error {
 	return s.cache.ZAdd(fmt.Sprintf(CacheKeyF, campaignID), &redis.Z{
 		Score:  float64(task.NotBefore.UnixNano()),
 		Member: task,
 	}).Err()
 }
-
-/*func (s *PubSubScheduler) popTask(task *db.Task) error {
-	z, err := s.cache.BZPopMin(5*time.Second, CacheKey).Result()
-	if err != nil {
-		return err
-	}
-	return task.UnmarshalBinary([]byte(z.Member.(string)))
-}*/
 
 // Since there are multiple per-campaign queues, popTask must
 // scan through the current keys in the cache and peek each
