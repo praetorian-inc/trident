@@ -18,8 +18,10 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -47,6 +49,20 @@ var (
 	// authentication provider to select for target, provider metadata is
 	// read from the config file
 	flagProvider string
+)
+
+const (
+	campaignSummary = `
+[Campaign Summary]
+Not Before: %s
+Not After: %s
+Interval: %s
+Username count: %d
+Password count: %d
+Provider: %s
+Metadata: %v
+
+`
 )
 
 var campaignCreateCmd = &cobra.Command{
@@ -117,6 +133,22 @@ func readLines(path string) ([]string, error) {
 	return lines, scanner.Err()
 }
 
+func confirm(s string) bool {
+	fmt.Printf("%s [y/N]: ", s)
+
+	reader := bufio.NewReader(os.Stdin)
+	r, err := reader.ReadString('\n')
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	r = strings.ToLower(strings.TrimSpace(r))
+	if r == "y" || r == "yes" {
+		return true
+	}
+	return false
+}
+
 func campaignCreate(cmd *cobra.Command, args []string) {
 	orchestrator := viper.GetString("orchestrator-url")
 	providers := viper.GetStringMap("providers")
@@ -150,6 +182,14 @@ func campaignCreate(cmd *cobra.Command, args []string) {
 	})
 	if err != nil {
 		log.Fatalf("error during JSON marshalling for request body: %s", err)
+	}
+
+	// print summary of campaign and prompt user to accept
+	fmt.Printf(campaignSummary, parsedNotBefore, parsedNotAfter, flagScheduleInterval,
+		len(users), len(passwords), flagProvider, providers[flagProvider])
+	if !confirm("Send campaign?") {
+		log.Printf("not sending campaign")
+		return
 	}
 
 	req, err := http.NewRequest("POST", orchestrator+"/campaign", bytes.NewBuffer(requestBody))
