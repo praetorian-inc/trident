@@ -43,7 +43,7 @@ func (a *ArgoAuthenticator) Auth(req *http.Request) error {
 		return err
 	}
 
-	req.Header.Add("cf-access-token", token)
+	req.Header.Set("cf-access-token", token)
 
 	return nil
 }

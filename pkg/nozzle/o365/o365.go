@@ -109,9 +109,9 @@ func (n *Nozzle) oauth2TokenLogin(username, password string) (*event.AuthRespons
 	body := fmt.Sprintf(oauth2TokenBody, username, password)
 
 	req, _ := http.NewRequest("POST", url, strings.NewReader(body))
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Add("User-Agent", n.UserAgent)
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("User-Agent", n.UserAgent)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {

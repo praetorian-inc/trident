@@ -173,7 +173,8 @@ func (n *Nozzle) ntlmStrategy(username, password string) (*event.AuthResponse, e
 
 	req, _ := http.NewRequest("GET", url, strings.NewReader(data))
 	req.SetBasicAuth(username, password)
-	req.Header.Add("Content-Type", "application/soap+xml")
+	req.Header.Set("Content-Type", "application/soap+xml")
+	req.Header.Set("User-Agent", n.UserAgent)
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -213,7 +214,8 @@ func (n *Nozzle) usernameMixedStrategy(username, password string) (*event.AuthRe
 	}
 
 	req, _ := http.NewRequest("GET", url, strings.NewReader(data))
-	req.Header.Add("Content-Type", "application/soap+xml")
+	req.Header.Set("Content-Type", "application/soap+xml")
+	req.Header.Set("User-Agent", n.UserAgent)
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
