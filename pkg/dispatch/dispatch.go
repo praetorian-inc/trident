@@ -94,28 +94,26 @@ func NewDispatcher(ctx context.Context, opts Options, wc WorkerClient) (*Dispatc
 // to the worker and results are then published to the Pub/Sub topic.
 func (d *Dispatcher) Listen(ctx context.Context) error {
 	return d.sub.Receive(ctx, func(ctx context.Context, msg *pubsub.Message) {
+		// always ACK messages to avoid infinite loop handling a bad message
+		defer msg.Ack()
+
 		var req event.AuthRequest
 		err := json.Unmarshal(msg.Data, &req)
 		if err != nil {
 			log.Printf("error unmarshaling: %s", err)
-			msg.Ack()
 			return
 		}
 
 		ts := time.Now()
 		if ts.After(req.NotAfter) {
-			log.Printf("received an event after end time, dropping")
-			msg.Ack()
 			return
 		}
 
 		resp, err := d.wc.Submit(req)
 		if err != nil {
 			log.Printf("error from worker: %s", err)
-			msg.Nack()
 			return
 		}
-		msg.Ack()
 
 		b, _ := json.Marshal(resp)
 		d.resultc.Publish(ctx, &pubsub.Message{

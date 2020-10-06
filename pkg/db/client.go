@@ -206,8 +206,6 @@ func (t *TridentDB) StreamingInsertResults() chan *Result {
 			}
 
 		commit:
-			log.Printf("streaming %d records to db", count)
-
 			_, err = stmt.Exec()
 			if err != nil {
 				log.Fatal(err)

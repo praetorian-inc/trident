@@ -74,3 +74,10 @@ type AuthResponse struct {
 	// Additional metadata from the auth provider (e.g. information about MFA)
 	Metadata map[string]interface{} `json:"metadata"`
 }
+
+// ErrorResponse represents a failure in task processing. This response should
+// be accompanied by a non-200 HTTP response code (e.g. HTTP 500).
+type ErrorResponse struct {
+	// ErrorMsg is the result of error.Error()
+	ErrorMsg string `json:"error"`
+}
