@@ -17,7 +17,6 @@ package server
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 
 	log "github.com/sirupsen/logrus"
@@ -46,16 +45,13 @@ func (s *Server) CampaignHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := parse.DecodeJSONBody(w, r, &c)
 	if err != nil {
-		log.Errorf("error parsing json: %s", err)
-
 		var mr *parse.MalformedRequest
-
 		if errors.As(err, &mr) {
 			http.Error(w, mr.Msg, mr.Status)
 		} else {
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			log.Errorf("unknown error decoding json: %s", err)
+			http.Error(w, http.StatusText(500), 500)
 		}
-
 		return
 	}
 
@@ -82,30 +78,24 @@ func (s *Server) CampaignHandler(w http.ResponseWriter, r *http.Request) {
 // ResultsHandler takes a user defined database query (returned fields + filter)
 // and applies it, returning the results in JSON
 func (s *Server) ResultsHandler(w http.ResponseWriter, r *http.Request) {
-	log.Info("retrieving results for query")
 	var q db.Query
 
 	err := parse.DecodeJSONBody(w, r, &q)
 	if err != nil {
-		log.Errorf("error parsing json: %s", err)
-
 		var mr *parse.MalformedRequest
-
 		if errors.As(err, &mr) {
 			http.Error(w, mr.Msg, mr.Status)
 		} else {
-			log.Errorf("there was something else we don't know: %s", err)
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			log.Errorf("unknown error decoding json: %s", err)
+			http.Error(w, http.StatusText(500), 500)
 		}
-
 		return
 	}
 
 	results, err := s.DB.SelectResults(q)
 	if err != nil {
-		message := fmt.Sprintf("there was an error collecting results from the database: %s", err)
-		log.Error(message)
-		http.Error(w, message, http.StatusInternalServerError)
+		log.Printf("error querying database: %s", err)
+		http.Error(w, http.StatusText(500), 500)
 	}
 
 	err = json.NewEncoder(w).Encode(&results)
@@ -120,15 +110,12 @@ func (s *Server) ResultsHandler(w http.ResponseWriter, r *http.Request) {
 // CampaignListHandler accepts no parameters and returns the list of active campaigns
 // via JSON
 func (s *Server) CampaignListHandler(w http.ResponseWriter, r *http.Request) {
-	log.Info("retrieving list of active campaigns")
-	log.Info("is this even deploying...")
 	var campaigns []db.Campaign
 
 	campaigns, err := s.DB.ListCampaign()
 	if err != nil {
-		message := fmt.Sprintf("there was an error collecting results from the database: %s", err)
-		log.Error(message)
-		http.Error(w, message, http.StatusInternalServerError)
+		log.Printf("error querying database: %s", err)
+		http.Error(w, http.StatusText(500), 500)
 	}
 
 	err = json.NewEncoder(w).Encode(&campaigns)
@@ -143,31 +130,25 @@ func (s *Server) CampaignListHandler(w http.ResponseWriter, r *http.Request) {
 // CampaignDescribeHandler takes a user-defined DB query with the campaignID, then
 // returns the parameters of that campaign via JSON
 func (s *Server) CampaignDescribeHandler(w http.ResponseWriter, r *http.Request) {
-	log.Info("retrieving description of queried campaign")
 	var q db.Query
 	var campaign db.Campaign
 
 	err := parse.DecodeJSONBody(w, r, &q)
 	if err != nil {
-		log.Errorf("error parsing json: %s", err)
-
 		var mr *parse.MalformedRequest
-
 		if errors.As(err, &mr) {
 			http.Error(w, mr.Msg, mr.Status)
 		} else {
-			log.Errorf("there was something else we don't know: %s", err)
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			log.Errorf("unknown error decoding json: %s", err)
+			http.Error(w, http.StatusText(500), 500)
 		}
-
 		return
 	}
 
 	campaign, err = s.DB.DescribeCampaign(q)
 	if err != nil {
-		message := fmt.Sprintf("there was an error collecting results from the database: %s", err)
-		log.Error(message)
-		http.Error(w, message, http.StatusInternalServerError)
+		log.Printf("error querying database: %s", err)
+		http.Error(w, http.StatusText(500), 500)
 	}
 
 	err = json.NewEncoder(w).Encode(&campaign)

@@ -17,6 +17,7 @@ package webhook
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -84,6 +85,15 @@ func (w *Client) Submit(r event.AuthRequest) (*event.AuthResponse, error) {
 		return nil, err
 	}
 	defer resp.Body.Close() // nolint:errcheck
+
+	if resp.StatusCode != 200 {
+		var res event.ErrorResponse
+		err = json.NewDecoder(resp.Body).Decode(&res)
+		if err != nil {
+			return nil, err
+		}
+		return nil, errors.New(res.ErrorMsg)
+	}
 
 	var res event.AuthResponse
 	err = json.NewDecoder(resp.Body).Decode(&res)

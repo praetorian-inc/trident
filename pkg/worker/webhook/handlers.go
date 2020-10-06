@@ -16,7 +16,7 @@ package webhook
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -24,7 +24,6 @@ import (
 
 	"github.com/praetorian-inc/trident/pkg/event"
 	"github.com/praetorian-inc/trident/pkg/nozzle"
-	"github.com/praetorian-inc/trident/pkg/parse"
 	"github.com/praetorian-inc/trident/pkg/util"
 )
 
@@ -47,40 +46,33 @@ func NewWebhookServer() (*Server, error) {
 // HealthzHandler returns an HTTP 200 ok always.
 func (s *Server) HealthzHandler(w http.ResponseWriter, r *http.Request) {}
 
+func httperr(w http.ResponseWriter, err error) {
+	res := event.ErrorResponse{ErrorMsg: err.Error()}
+	w.WriteHeader(500)
+	json.NewEncoder(w).Encode(&res) // nolint:errcheck,gosec
+}
+
 // EventHandler accepts an AuthRequest, executes the task using the nozzle
 // interface and returns the AuthResponse via JSON.
 func (s *Server) EventHandler(w http.ResponseWriter, r *http.Request) {
-	log.Info("retrieving results for query")
 	var req event.AuthRequest
 
-	err := parse.DecodeJSONBody(w, r, &req)
+	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		log.Infof("error parsing json: %s", err)
-
-		var mr *parse.MalformedRequest
-
-		if errors.As(err, &mr) {
-			http.Error(w, mr.Msg, mr.Status)
-		} else {
-			log.Errorf("there was something else we don't know: %s", err)
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		}
-
+		httperr(w, fmt.Errorf("error decoding body: %w", err))
 		return
 	}
 
 	noz, err := nozzle.Open(req.Provider, req.ProviderMetadata)
 	if err != nil {
-		log.Errorf("error opening nozzle: %s", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperr(w, fmt.Errorf("error opening nozzle: %w", err))
 		return
 	}
 
 	ts := time.Now()
 	res, err := noz.Login(req.Username, req.Password)
 	if err != nil {
-		log.Errorf("error logging in to %s: %s", req.Provider, err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		httperr(w, fmt.Errorf("error authenticating to %s provider: %w", req.Provider, err))
 		return
 	}
 
@@ -91,8 +83,5 @@ func (s *Server) EventHandler(w http.ResponseWriter, r *http.Request) {
 	res.Timestamp = ts
 	res.IP = s.ip
 
-	err = json.NewEncoder(w).Encode(&res)
-	if err != nil {
-		log.Printf("error writing to http response: %s", err)
-	}
+	json.NewEncoder(w).Encode(&res) // nolint:errcheck,gosec
 }
