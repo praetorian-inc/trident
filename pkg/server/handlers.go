@@ -116,3 +116,65 @@ func (s *Server) ResultsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+// CampaignListHandler accepts no parameters and returns the list of active campaigns
+// via JSON
+func (s *Server) CampaignListHandler(w http.ResponseWriter, r *http.Request) {
+	log.Info("retrieving list of active campaigns")
+	log.Info("is this even deploying...")
+	var campaigns []db.Campaign
+
+	campaigns, err := s.DB.ListCampaign()
+	if err != nil {
+		message := fmt.Sprintf("there was an error collecting results from the database: %s", err)
+		log.Error(message)
+		http.Error(w, message, http.StatusInternalServerError)
+	}
+
+	err = json.NewEncoder(w).Encode(&campaigns)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"results": campaigns,
+		}).Errorf("error encoding results: %s", err)
+		return
+	}
+}
+
+// CampaignDescribeHandler takes a user-defined DB query with the campaignID, then
+// returns the parameters of that campaign via JSON
+func (s *Server) CampaignDescribeHandler(w http.ResponseWriter, r *http.Request) {
+	log.Info("retrieving description of queried campaign")
+	var q db.Query
+	var campaign db.Campaign
+
+	err := parse.DecodeJSONBody(w, r, &q)
+	if err != nil {
+		log.Errorf("error parsing json: %s", err)
+
+		var mr *parse.MalformedRequest
+
+		if errors.As(err, &mr) {
+			http.Error(w, mr.Msg, mr.Status)
+		} else {
+			log.Errorf("there was something else we don't know: %s", err)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
+
+		return
+	}
+
+	campaign, err = s.DB.DescribeCampaign(q)
+	if err != nil {
+		message := fmt.Sprintf("there was an error collecting results from the database: %s", err)
+		log.Error(message)
+		http.Error(w, message, http.StatusInternalServerError)
+	}
+
+	err = json.NewEncoder(w).Encode(&campaign)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"campaign": campaign,
+		}).Errorf("error encoding campaign: %s", err)
+		return
+	}
+}

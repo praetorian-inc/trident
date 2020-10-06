@@ -72,6 +72,21 @@ func (m *mockDB) InsertResult(r *db.Result) error {
 	return nil
 }
 
+func (m *mockDB) ListCampaign() ([]db.Campaign, error) {
+	return []db.Campaign{
+		{Provider: "okta", ProviderMetadata: json.RawMessage(`{"subdomain": "example"}`)},
+		{Provider: "adfs", ProviderMetadata: json.RawMessage(`{"domain": "adfs.example.com"}`)},
+	}, nil
+}
+
+func (m *mockDB) DescribeCampaign(query db.Query) (db.Campaign, error) {
+	return db.Campaign{
+		Provider:         "okta",
+		ProviderMetadata: json.RawMessage(`{"subdomain":"example"}`),
+	}, nil
+
+}
+
 func (m *mockDB) Close() error {
 	return nil
 }

@@ -32,6 +32,8 @@ type Datastore interface {
 
 	SelectResults(Query) ([]Result, error)
 	InsertResult(*Result) error
+	ListCampaign() ([]Campaign, error)
+	DescribeCampaign(Query) (Campaign, error)
 	Close() error
 }
 
@@ -223,4 +225,29 @@ func (t *TridentDB) StreamingInsertResults() chan *Result {
 		}
 	}()
 	return results
+}
+
+// ListCampaign queries metadata from the list of all campaigns.
+func (t *TridentDB) ListCampaign() ([]Campaign, error) {
+	var campaigns []Campaign
+
+	err := t.db.Select([]string{"id", "provider", "provider_metadata", "created_at"}).
+		Find(&campaigns).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return campaigns, nil
+}
+
+// DescribeCampaign queries all data about a specific campaign.
+func (t *TridentDB) DescribeCampaign(query Query) (Campaign, error) {
+	var campaign Campaign
+
+	err := t.db.Where(query.Filter).Find(&campaign).Error
+	if err != nil {
+		return campaign, err
+	}
+
+	return campaign, nil
 }
