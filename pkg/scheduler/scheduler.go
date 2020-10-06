@@ -17,6 +17,7 @@ package scheduler
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"time"
 
@@ -28,7 +29,9 @@ import (
 
 const (
 	// CacheKey is the Redis key used to store the task set.
-	CacheKey = "tasks"
+	CacheKey  = "tasks"
+	CacheKeyF = "campaign%d.tasks"
+	CacheKeyR = "campaign*.tasks" // CacheKey format string for the redis Scan function
 )
 
 // Scheduler is an interface which wraps several scheduling functions together.
@@ -102,17 +105,66 @@ func NewPubSubScheduler(opts Options) (*PubSubScheduler, error) {
 	}, nil
 }
 
-func (s *PubSubScheduler) pushTask(task *db.Task) error {
+/*func (s *PubSubScheduler) pushTask(task *db.Task) error {
 	return s.cache.ZAdd(CacheKey, &redis.Z{
+		Score:  float64(task.NotBefore.UnixNano()),
+		Member: task,
+	}).Err()
+}*/
+
+func (s *PubSubScheduler) pushCampaignTask(task *db.Task, campaignID uint) error {
+	return s.cache.ZAdd(fmt.Sprintf(CacheKeyF, campaignID), &redis.Z{
 		Score:  float64(task.NotBefore.UnixNano()),
 		Member: task,
 	}).Err()
 }
 
-func (s *PubSubScheduler) popTask(task *db.Task) error {
+/*func (s *PubSubScheduler) popTask(task *db.Task) error {
 	z, err := s.cache.BZPopMin(5*time.Second, CacheKey).Result()
 	if err != nil {
 		return err
+	}
+	return task.UnmarshalBinary([]byte(z.Member.(string)))
+}*/
+
+// Since there are multiple per-campaign queues, popTask must
+// scan through the current keys in the cache and peek each
+// minimum member of the queues in order to select a candidate
+func (s *PubSubScheduler) popTask(task *db.Task) error {
+	// KEYS is apparently inadvisable (according to docs
+	// it can be unsafe in a production environment, since it can
+	// leak ~every~ key in the db, but i /think/ in our case that's
+	// inconsequential), plus the alternative solution involving
+	// SCAN seems overly complicated and less deterministic
+	campaignKeys, err := s.cache.Keys(CacheKeyR).Result()
+	if err != nil {
+		return err
+	}
+
+	var minKey string
+	var minNotBefore float64
+	// track lowest NotBefore time across all campaigns
+	for _, key := range campaignKeys {
+		minTask, err := s.cache.ZRangeWithScores(key, 0, 0).Result()
+		if err != nil {
+			return err
+		}
+		// warning this code will possibly behave weird if you're trying
+		// to run campaigns starting on the Unix epoch
+		if minNotBefore == 0 || minNotBefore > minTask[0].Score {
+			minNotBefore = minTask[0].Score
+			minKey = key
+		}
+	}
+
+	// per weems' suggestion, we may be able to decrease the block
+	// time on this
+	z, err := s.cache.BZPopMin(5*time.Second, minKey).Result()
+	if err != nil {
+		return err
+	}
+	if z.Score != minNotBefore {
+		log.Printf("unexpected score retrieved by popTask: expected %f got %f", minNotBefore, z.Score)
 	}
 	return task.UnmarshalBinary([]byte(z.Member.(string)))
 }
@@ -130,7 +182,7 @@ func (s *PubSubScheduler) Schedule(campaign db.Campaign) error {
 	t := campaign.NotBefore
 	for _, p := range campaign.Passwords {
 		for _, u := range campaign.Users {
-			err := s.pushTask(&db.Task{
+			err := s.pushCampaignTask(&db.Task{
 				CampaignID:       campaign.ID,
 				NotBefore:        t,
 				NotAfter:         campaign.NotAfter,
@@ -138,7 +190,7 @@ func (s *PubSubScheduler) Schedule(campaign db.Campaign) error {
 				Password:         p,
 				Provider:         campaign.Provider,
 				ProviderMetadata: campaign.ProviderMetadata,
-			})
+			}, campaign.ID)
 			if err != nil {
 				log.Printf("error in redis push task: %s", err)
 			}
@@ -168,7 +220,7 @@ func (s *PubSubScheduler) ProduceTasks() {
 
 		if time.Until(task.NotBefore) > 5*time.Second {
 			// our task was not ready, reschedule it
-			err = s.pushTask(&task)
+			err = s.pushCampaignTask(&task, task.CampaignID)
 			if err != nil {
 				log.Printf("error rescheduling task: %s", err)
 			}
