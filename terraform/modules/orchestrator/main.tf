@@ -58,7 +58,7 @@ resource "random_password" "db" {
   special = false
 }
 
-resource "google_sql_database" "database" {
+resource "google_sql_database" "db" {
   name     = "trident"
   instance = var.db_instance_name
 }
@@ -123,7 +123,7 @@ resource "kubernetes_secret" "db" {
   }
 
   data = {
-    "connection" = "postgres://${google_sql_user.user.name}:${random_password.db.result}@127.0.0.1/postgres?sslmode=disable"
+    "connection" = "postgres://${google_sql_user.user.name}:${random_password.db.result}@127.0.0.1/${google_sql_database.db.name}?sslmode=disable"
   }
 }
 
