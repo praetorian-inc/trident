@@ -54,7 +54,7 @@ func TestNozzle(t *testing.T) {
 	usernameMFA := "test5@tridentcontoso.onmicrosoft.com"
 	passwordMFA := "ItsAutumn20205!"
 
-	attemptsBeforeLockout := 10
+	// attemptsBeforeLockout := 10
 
 	var testcases = []testcase{
 		{
@@ -102,14 +102,14 @@ func TestNozzle(t *testing.T) {
 		}
 	}
 
-	var beforeLockout = testcase{
-		desc:     "invalid login, pre-lockout",
-		username: username,
-		password: "Invalid1!",
-		valid:    false,
-		mfa:      false,
-		locked:   false,
-	}
+	// var beforeLockout = testcase{
+	// 	desc:     "invalid login, pre-lockout",
+	// 	username: username,
+	// 	password: "Invalid1!",
+	// 	valid:    false,
+	// 	mfa:      false,
+	// 	locked:   false,
+	// }
 
 	var afterLockout = testcase{
 		desc:     "invalid login, post-lockout",
