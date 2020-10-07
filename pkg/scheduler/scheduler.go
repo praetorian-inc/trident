@@ -28,8 +28,11 @@ import (
 )
 
 const (
-	CacheKeyF = "campaign%d.tasks" // CacheKey format string for normal sprintf use
-	CacheKeyR = "campaign*.tasks"  // CacheKey format string for the redis Scan function
+	// CacheKeyF format string for normal sprintf use
+	CacheKeyF = "campaign%d.tasks"
+
+	// CacheKeyR format string for the redis Scan function
+	CacheKeyR = "campaign*.tasks"
 )
 
 // Scheduler is an interface which wraps several scheduling functions together.
