@@ -113,34 +113,10 @@ func (s *PubSubScheduler) pushCampaignTask(task *db.Task, campaignID uint) error
 	}).Err()
 }
 
-// Since there are multiple per-campaign queues, popTask must
-// scan through the current keys in the cache and peek each
-// minimum member of the queues in order to select a candidate
 func (s *PubSubScheduler) popTask(task *db.Task, campaignKey string) error {
-
-	var minKey string
-	var minNotBefore float64
-	var minTask []redis.Z
-	var err error
-
-	minTask, err = s.cache.ZRangeWithScores(campaignKey, 0, 0).Result()
+	z, err := s.cache.BZPopMin(5*time.Second, campaignKey).Result()
 	if err != nil {
 		return err
-	}
-	// warning this code will possibly behave weird if you're trying
-	// to run campaigns starting on the Unix epoch
-	if minNotBefore == 0 || minNotBefore > minTask[0].Score {
-		minNotBefore = minTask[0].Score
-		minKey = campaignKey
-	}
-
-	var z *redis.ZWithKey
-	z, err = s.cache.BZPopMin(5*time.Second, minKey).Result()
-	if err != nil {
-		return err
-	}
-	if z.Score != minNotBefore {
-		log.Printf("unexpected score retrieved by popTask: expected %f got %f", minNotBefore, z.Score)
 	}
 	return task.UnmarshalBinary([]byte(z.Member.(string)))
 }
