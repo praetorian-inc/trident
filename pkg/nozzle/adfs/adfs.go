@@ -40,6 +40,11 @@ const (
 		"AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3764.0 Safari/537.36"
 )
 
+var (
+	// RateLimiter limits requests from the same worker to a maximum of 3/s
+	RateLimiter = rate.NewLimiter(rate.Every(300*time.Millisecond), 1)
+)
+
 // Driver implements the nozzle.Driver interface.
 type Driver struct{}
 
@@ -70,14 +75,10 @@ func (Driver) New(opts map[string]string) (nozzle.Nozzle, error) {
 		strategy = "usernamemixed"
 	}
 
-	// Rate limit requests from the same worker to a maximum of 3/s
-	rl := rate.NewLimiter(rate.Every(300*time.Millisecond), 1)
-
 	return &Nozzle{
-		Domain:      domain,
-		Strategy:    strategy,
-		UserAgent:   FrozenUserAgent,
-		RateLimiter: rl,
+		Domain:    domain,
+		Strategy:  strategy,
+		UserAgent: FrozenUserAgent,
 	}, nil
 }
 
@@ -91,9 +92,6 @@ type Nozzle struct {
 
 	// UserAgent will override the Go-http-client user-agent in requests
 	UserAgent string
-
-	// RateLimiter controls how frequently we send requests to adfs
-	RateLimiter *rate.Limiter
 }
 
 var (
@@ -243,7 +241,7 @@ func (n *Nozzle) usernameMixedStrategy(username, password string) (*event.AuthRe
 // invalid, and locked out responses.
 func (n *Nozzle) Login(username, password string) (*event.AuthResponse, error) {
 	ctx := context.Background()
-	err := n.RateLimiter.Wait(ctx)
+	err := RateLimiter.Wait(ctx)
 	if err != nil {
 		return nil, err
 	}
