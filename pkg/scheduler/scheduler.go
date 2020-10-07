@@ -17,6 +17,7 @@ package scheduler
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -116,32 +117,22 @@ func (s *PubSubScheduler) pushCampaignTask(task *db.Task, campaignID uint) error
 // Since there are multiple per-campaign queues, popTask must
 // scan through the current keys in the cache and peek each
 // minimum member of the queues in order to select a candidate
-func (s *PubSubScheduler) popTask(task *db.Task) error {
-	// KEYS is apparently inadvisable (according to docs
-	// it can be unsafe in a production environment, since it can
-	// leak ~every~ key in the db, but i /think/ in our case that's
-	// inconsequential), plus the alternative solution involving
-	// SCAN seems overly complicated and less deterministic
-	campaignKeys, err := s.cache.Keys(CacheKeyR).Result()
-	if err != nil {
-		return err
-	}
+func (s *PubSubScheduler) popTask(task *db.Task, campaignKey string) error {
 
 	var minKey string
 	var minNotBefore float64
 	var minTask []redis.Z
-	// track lowest NotBefore time across all campaigns
-	for _, key := range campaignKeys {
-		minTask, err = s.cache.ZRangeWithScores(key, 0, 0).Result()
-		if err != nil {
-			return err
-		}
-		// warning this code will possibly behave weird if you're trying
-		// to run campaigns starting on the Unix epoch
-		if minNotBefore == 0 || minNotBefore > minTask[0].Score {
-			minNotBefore = minTask[0].Score
-			minKey = key
-		}
+	var err error
+
+	minTask, err = s.cache.ZRangeWithScores(campaignKey, 0, 0).Result()
+	if err != nil {
+		return err
+	}
+	// warning this code will possibly behave weird if you're trying
+	// to run campaigns starting on the Unix epoch
+	if minNotBefore == 0 || minNotBefore > minTask[0].Score {
+		minNotBefore = minTask[0].Score
+		minKey = campaignKey
 	}
 
 	// per weems' suggestion, we may be able to decrease the block
@@ -191,34 +182,52 @@ func (s *PubSubScheduler) Schedule(campaign db.Campaign) error {
 	return nil
 }
 
+func (s *PubSubScheduler) publishTask(ctx context.Context, task *db.Task) error {
+	if time.Until(task.NotBefore) > 5*time.Second {
+		// our task was not ready, reschedule it
+		err := s.pushCampaignTask(task, task.CampaignID)
+		if err != nil {
+			errMsg := fmt.Sprintf("error rescheduling task: %s", err)
+			return errors.New(errMsg)
+		}
+		time.Sleep(1 * time.Second)
+	} else {
+		// our task was ready, run it!
+		b, _ := json.Marshal(task)
+		publishResults := s.pub.Publish(ctx, &pubsub.Message{
+			Data: b,
+		})
+		_, err := publishResults.Get(ctx)
+		if err != nil {
+			errMsg := fmt.Sprintf("error publishing task: %s", err)
+			return errors.New(errMsg)
+		}
+	}
+	return nil
+}
+
 // ProduceTasks will poll the task schedule and publish tasks to pub/sub when
 // the top task is ready.
 func (s *PubSubScheduler) ProduceTasks() {
 	ctx := context.Background()
+	var cursor uint64
 	for {
-		var task db.Task
-		err := s.popTask(&task)
-		if err == redis.Nil {
-			continue
-		}
+		var campaignKeys []string
+		var err error
+		campaignKeys, cursor, err = s.cache.Scan(cursor, CacheKeyR, 10).Result()
 		if err != nil {
-			log.Printf("error in redis pop task: %s", err)
-			continue
+			log.Printf("error fetching campaign keys: %s", err)
 		}
-
-		if time.Until(task.NotBefore) > 5*time.Second {
-			// our task was not ready, reschedule it
-			err = s.pushCampaignTask(&task, task.CampaignID)
+		for _, campaign := range campaignKeys {
+			var task db.Task
+			err = s.popTask(&task, campaign)
 			if err != nil {
-				log.Printf("error rescheduling task: %s", err)
+				log.Printf("error calling popTask: %s", err)
 			}
-			time.Sleep(1 * time.Second)
-		} else {
-			// our task was ready, run it!
-			b, _ := json.Marshal(task)
-			s.pub.Publish(ctx, &pubsub.Message{
-				Data: b,
-			})
+			err = s.publishTask(ctx, &task)
+			if err != nil {
+				log.Printf("%s", err)
+			}
 		}
 	}
 }
