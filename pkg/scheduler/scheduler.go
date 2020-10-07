@@ -135,8 +135,6 @@ func (s *PubSubScheduler) popTask(task *db.Task, campaignKey string) error {
 		minKey = campaignKey
 	}
 
-	// per weems' suggestion, we may be able to decrease the block
-	// time on this
 	var z *redis.ZWithKey
 	z, err = s.cache.BZPopMin(5*time.Second, minKey).Result()
 	if err != nil {
