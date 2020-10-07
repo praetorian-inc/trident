@@ -17,7 +17,6 @@ package scheduler
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -185,8 +184,7 @@ func (s *PubSubScheduler) publishTask(ctx context.Context, task *db.Task) error 
 		// our task was not ready, reschedule it
 		err := s.pushCampaignTask(task, task.CampaignID)
 		if err != nil {
-			errMsg := fmt.Sprintf("error rescheduling task: %s", err)
-			return errors.New(errMsg)
+			return fmt.Errorf("error rescheduling task: %w", err)
 		}
 		time.Sleep(1 * time.Second)
 	} else {
@@ -197,8 +195,7 @@ func (s *PubSubScheduler) publishTask(ctx context.Context, task *db.Task) error 
 		})
 		_, err := publishResults.Get(ctx)
 		if err != nil {
-			errMsg := fmt.Sprintf("error publishing task: %s", err)
-			return errors.New(errMsg)
+			return fmt.Errorf("error publishing task: %w", err)
 		}
 	}
 	return nil
