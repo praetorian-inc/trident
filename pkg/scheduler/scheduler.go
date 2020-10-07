@@ -17,6 +17,7 @@ package scheduler
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"time"
 
@@ -27,8 +28,11 @@ import (
 )
 
 const (
-	// CacheKey is the Redis key used to store the task set.
-	CacheKey = "tasks"
+	// CacheKeyF format string for normal sprintf use
+	CacheKeyF = "campaign%d.tasks"
+
+	// CacheKeyR format string for the redis Scan function
+	CacheKeyR = "campaign*.tasks"
 )
 
 // Scheduler is an interface which wraps several scheduling functions together.
@@ -102,15 +106,15 @@ func NewPubSubScheduler(opts Options) (*PubSubScheduler, error) {
 	}, nil
 }
 
-func (s *PubSubScheduler) pushTask(task *db.Task) error {
-	return s.cache.ZAdd(CacheKey, &redis.Z{
+func (s *PubSubScheduler) pushCampaignTask(task *db.Task, campaignID uint) error {
+	return s.cache.ZAdd(fmt.Sprintf(CacheKeyF, campaignID), &redis.Z{
 		Score:  float64(task.NotBefore.UnixNano()),
 		Member: task,
 	}).Err()
 }
 
-func (s *PubSubScheduler) popTask(task *db.Task) error {
-	z, err := s.cache.BZPopMin(5*time.Second, CacheKey).Result()
+func (s *PubSubScheduler) popTask(task *db.Task, campaignKey string) error {
+	z, err := s.cache.BZPopMin(5*time.Second, campaignKey).Result()
 	if err != nil {
 		return err
 	}
@@ -130,7 +134,7 @@ func (s *PubSubScheduler) Schedule(campaign db.Campaign) error {
 	t := campaign.NotBefore
 	for _, p := range campaign.Passwords {
 		for _, u := range campaign.Users {
-			err := s.pushTask(&db.Task{
+			err := s.pushCampaignTask(&db.Task{
 				CampaignID:       campaign.ID,
 				NotBefore:        t,
 				NotAfter:         campaign.NotAfter,
@@ -138,7 +142,7 @@ func (s *PubSubScheduler) Schedule(campaign db.Campaign) error {
 				Password:         p,
 				Provider:         campaign.Provider,
 				ProviderMetadata: campaign.ProviderMetadata,
-			})
+			}, campaign.ID)
 			if err != nil {
 				log.Printf("error in redis push task: %s", err)
 			}
@@ -151,34 +155,54 @@ func (s *PubSubScheduler) Schedule(campaign db.Campaign) error {
 	return nil
 }
 
+func (s *PubSubScheduler) publishTask(ctx context.Context, task *db.Task) error {
+	if time.Until(task.NotBefore) > 5*time.Second {
+		// our task was not ready, reschedule it
+		err := s.pushCampaignTask(task, task.CampaignID)
+		if err != nil {
+			return fmt.Errorf("error rescheduling task: %w", err)
+		}
+		time.Sleep(1 * time.Second)
+	} else {
+		// our task was ready, run it!
+		b, _ := json.Marshal(task)
+		publishResults := s.pub.Publish(ctx, &pubsub.Message{
+			Data: b,
+		})
+		_, err := publishResults.Get(ctx)
+		if err != nil {
+			return fmt.Errorf("error publishing task: %w", err)
+		}
+	}
+	return nil
+}
+
 // ProduceTasks will poll the task schedule and publish tasks to pub/sub when
 // the top task is ready.
 func (s *PubSubScheduler) ProduceTasks() {
 	ctx := context.Background()
+	var cursor uint64
 	for {
-		var task db.Task
-		err := s.popTask(&task)
-		if err == redis.Nil {
-			continue
-		}
+		var campaignKeys []string
+		var err error
+		campaignKeys, cursor, err = s.cache.Scan(cursor, CacheKeyR, 10).Result()
 		if err != nil {
-			log.Printf("error in redis pop task: %s", err)
+			log.Printf("error fetching campaign keys: %s", err)
+		}
+		if len(campaignKeys) == 0 {
+			time.Sleep(1 * time.Second)
 			continue
 		}
-
-		if time.Until(task.NotBefore) > 5*time.Second {
-			// our task was not ready, reschedule it
-			err = s.pushTask(&task)
+		for _, campaign := range campaignKeys {
+			var task db.Task
+			err = s.popTask(&task, campaign)
 			if err != nil {
-				log.Printf("error rescheduling task: %s", err)
+				log.Printf("error calling popTask: %s", err)
 			}
-			time.Sleep(1 * time.Second)
-		} else {
-			// our task was ready, run it!
-			b, _ := json.Marshal(task)
-			s.pub.Publish(ctx, &pubsub.Message{
-				Data: b,
-			})
+			err = s.publishTask(ctx, &task)
+			if err != nil {
+				log.Printf("%s", err)
+			}
 		}
 	}
 }
