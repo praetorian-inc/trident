@@ -34,6 +34,8 @@ type Campaign struct {
 	// inherit the base model's fields
 	Model
 
+	//Add status for Campaign here (ex: Cancelled, Paused, w/e)
+
 	// a campaign should not make requests before this time
 	NotBefore time.Time `json:"not_before"`
 

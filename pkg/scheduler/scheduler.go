@@ -134,6 +134,8 @@ func (s *PubSubScheduler) Schedule(campaign db.Campaign) error {
 	t := campaign.NotBefore
 	for _, p := range campaign.Passwords {
 		for _, u := range campaign.Users {
+			//Check to make sure we're not scheduling a cancelled/paused campaign
+
 			err := s.pushCampaignTask(&db.Task{
 				CampaignID:       campaign.ID,
 				NotBefore:        t,
@@ -156,6 +158,9 @@ func (s *PubSubScheduler) Schedule(campaign db.Campaign) error {
 }
 
 func (s *PubSubScheduler) publishTask(ctx context.Context, task *db.Task) error {
+
+	//Check if task.CampaignID belongs to a cancelled/halted Campaign. If so skip it.
+
 	if time.Until(task.NotBefore) > 5*time.Second {
 		// our task was not ready, reschedule it
 		err := s.pushCampaignTask(task, task.CampaignID)
