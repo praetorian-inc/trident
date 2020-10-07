@@ -219,14 +219,21 @@ func (s *PubSubScheduler) ProduceTasks() {
 			log.Printf("error fetching campaign keys: %s", err)
 		}
 		for _, campaign := range campaignKeys {
-			var task db.Task
-			err = s.popTask(&task, campaign)
+			var taskLen int64
+			taskLen, err = s.cache.StrLen(campaign).Result()
 			if err != nil {
-				log.Printf("error calling popTask: %s", err)
+				log.Printf("error fetching task list size: %s", err)
 			}
-			err = s.publishTask(ctx, &task)
-			if err != nil {
-				log.Printf("%s", err)
+			if taskLen > 0 {
+				var task db.Task
+				err = s.popTask(&task, campaign)
+				if err != nil {
+					log.Printf("error calling popTask: %s", err)
+				}
+				err = s.publishTask(ctx, &task)
+				if err != nil {
+					log.Printf("%s", err)
+				}
 			}
 		}
 	}
