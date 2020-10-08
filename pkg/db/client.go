@@ -29,7 +29,7 @@ import (
 // drivers to support other db platforms.
 type Datastore interface {
 	InsertCampaign(*Campaign) error
-
+	UpdateCampaign(*Campaign) error
 	SelectResults(Query) ([]Result, error)
 	InsertResult(*Result) error
 	ListCampaign() ([]Campaign, error)
@@ -112,6 +112,14 @@ func (t *TridentDB) Close() error {
 // future).
 func (t *TridentDB) InsertCampaign(campaign *Campaign) error {
 	return t.db.Create(campaign).Error
+}
+
+// UpdateCampaign is a required function by the Datastore interface. it is a
+// thin wrapper around the Gorm save method, this is largely to help with
+// database mocking for tests (and for help with multiple drivers in the
+// future).
+func (t *TridentDB) UpdateCampaign(campaign *Campaign) error {
+	return t.db.Save(campaign).Error
 }
 
 // SelectResults is a required function by the Datastore interface. it uses a

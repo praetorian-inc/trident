@@ -159,3 +159,45 @@ func (s *Server) CampaignDescribeHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 }
+
+// CancelHandler takes a campaignId from the user, then
+// sets its status to cancelled in the database.
+// returns the parameters of that campaign via JSON
+func (s *Server) CancelHandler(w http.ResponseWriter, r *http.Request) {
+	var q db.Query
+	var campaign db.Campaign
+
+	err := parse.DecodeJSONBody(w, r, &q)
+	if err != nil {
+		var mr *parse.MalformedRequest
+		if errors.As(err, &mr) {
+			http.Error(w, mr.Msg, mr.Status)
+		} else {
+			log.Errorf("unknown error decoding json: %s", err)
+			http.Error(w, http.StatusText(500), 500)
+		}
+		return
+	}
+
+	campaign, err = s.DB.DescribeCampaign(q)
+	if err != nil {
+		log.Printf("error querying database: %s", err)
+		http.Error(w, http.StatusText(500), 500)
+	}
+
+	campaign.Status = "Cancelled"
+
+	err = s.DB.UpdateCampaign(&campaign)
+	if err != nil {
+		log.Printf("error updating database: %s", err)
+		http.Error(w, http.StatusText(500), 500)
+	}
+
+	err = json.NewEncoder(w).Encode(&campaign)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"campaign": campaign,
+		}).Errorf("error encoding campaign: %s", err)
+		return
+	}
+}

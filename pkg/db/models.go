@@ -34,8 +34,6 @@ type Campaign struct {
 	// inherit the base model's fields
 	Model
 
-	//Add status for Campaign here (ex: Cancelled, Paused, w/e)
-
 	// a campaign should not make requests before this time
 	NotBefore time.Time `json:"not_before"`
 
@@ -44,6 +42,9 @@ type Campaign struct {
 
 	// a campaign should make requests with this interval in between them
 	ScheduleInterval time.Duration `json:"schedule_interval"`
+
+	// current status of the campaign, used to pause/cancel/resume without deletion
+	Status string `json:"status"`
 
 	// the slice of usernames to guess in this campaign
 	Users pq.StringArray `json:"users" gorm:"type:varchar(255)[]"`

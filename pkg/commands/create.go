@@ -174,6 +174,7 @@ func campaignCreate(cmd *cobra.Command, args []string) {
 	requestBody, err := json.Marshal(map[string]interface{}{
 		"not_before":        parsedNotBefore,
 		"not_after":         parsedNotAfter,
+		"status":            "Active",
 		"schedule_interval": flagScheduleInterval,
 		"users":             users,
 		"passwords":         passwords,
