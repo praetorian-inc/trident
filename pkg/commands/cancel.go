@@ -15,10 +15,9 @@
 package commands
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -50,24 +49,10 @@ func init() {
 func cancelPost(cmd *cobra.Command, args []string) {
 	orchestrator := viper.GetString("orchestrator-url")
 
-	var flagFilter = fmt.Sprintf("{\"id\":%s}", campaignID)
+	//Build out our request body using a JSON serialized Query object
+	reqBody := strings.NewReader(fmt.Sprintf("{\"Filter\":{\"id\":%d}}", campaignID))
 
-	var filter map[string]interface{}
-	err := json.Unmarshal([]byte(flagFilter), &filter)
-	if err != nil {
-		log.Fatalf("error during JSON unmarshalling: %s", err)
-	}
-
-	// build our request to the orchestrator.
-	// return all fields (*) and the filter is the campaignID
-	requestBody, err := json.Marshal(map[string]interface{}{
-		"Filter": filter,
-	})
-	if err != nil {
-		log.Fatalf("error during JSON marshalling for request body: %s", err)
-	}
-
-	req, err := http.NewRequest("POST", orchestrator+"/cancel", bytes.NewBuffer(requestBody))
+	req, err := http.NewRequest("POST", orchestrator+"/cancel", reqBody)
 	if err != nil {
 		log.Fatalf("error during request creation: %s", err)
 	}

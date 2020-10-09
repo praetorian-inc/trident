@@ -31,6 +31,10 @@ func (m *mockDB) InsertCampaign(c *db.Campaign) error {
 	return nil
 }
 
+func (m *mockDB) UpdateCampaign(c *db.Campaign) error {
+	return nil
+}
+
 func (m *mockDB) SelectResults(q db.Query) ([]db.Result, error) {
 	var results []db.Result
 
@@ -121,6 +125,29 @@ func TestHealthzHandler(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(s.HealthzHandler)
+
+	handler.ServeHTTP(rr, req)
+
+	// Check the status code is what we expect.
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+			status, http.StatusOK)
+	}
+}
+
+func TestCancelHandler(t *testing.T) {
+	s := initServer()
+
+	testBody := strings.NewReader("{\"Filter\":{\"id\":1}}")
+
+	req, err := http.NewRequest("POST", "/cancel", testBody)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(s.CancelHandler)
 
 	handler.ServeHTTP(rr, req)
 
