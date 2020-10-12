@@ -34,12 +34,13 @@ type Datastore interface {
 	InsertResult(*Result) error
 	ListCampaign() ([]Campaign, error)
 	DescribeCampaign(Query) (Campaign, error)
+	IsCampaignCancelled(uint) (bool, error)
 	Close() error
 }
 
 const (
-	CAMPAIGN_STATUS_CANCELLED = "Cancelled"
-	CAMPAIGN_STATUS_ACTIVE    = "Active"
+	CampaignStatusCancelled = "Cancelled"
+	CampaignStatusActive    = "Active"
 )
 
 // TridentDB implements the Datastore interface. it is backed by a gorm.DB type
@@ -251,11 +252,12 @@ func (t *TridentDB) ListCampaign() ([]Campaign, error) {
 	return campaigns, nil
 }
 
+// IsCampaignCancelled takes a campaign ID and returns true if the campaign status is CampaignStatusCancelled
 func (t *TridentDB) IsCampaignCancelled(campaignId uint) (bool, error) {
 	var matches []Campaign
 
 	var query = Query{
-		Filter: map[string]interface{}{"id": campaignId, "status": CAMPAIGN_STATUS_CANCELLED},
+		Filter: map[string]interface{}{"id": campaignId, "status": CampaignStatusCancelled},
 	}
 
 	err := t.db.
@@ -269,9 +271,9 @@ func (t *TridentDB) IsCampaignCancelled(campaignId uint) (bool, error) {
 
 	if len(matches) != 0 {
 		return true, nil
-	} else {
-		return false, nil
 	}
+
+	return false, nil
 }
 
 // DescribeCampaign queries all data about a specific campaign.

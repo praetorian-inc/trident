@@ -49,15 +49,19 @@ func init() {
 func cancelPost(cmd *cobra.Command, args []string) {
 	orchestrator := viper.GetString("orchestrator-url")
 
-	var q db.Query
-	q = db.Query{
+	q := db.Query{
 		Filter: map[string]interface{}{
 			"id": campaignID,
 		},
 	}
 
 	buf := new(bytes.Buffer)
-	json.NewEncoder(buf).Encode(q)
+	err := json.NewEncoder(buf).Encode(q)
+
+	if err != nil {
+		log.Fatalf("error encoding cancel json request: %s", err)
+	}
+
 	req, err := http.NewRequest("POST", orchestrator+"/cancel", buf)
 
 	if err != nil {
