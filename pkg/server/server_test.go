@@ -27,6 +27,11 @@ import (
 
 type mockDB struct{}
 
+func (m *mockDB) IsCampaignCancelled(campaignId uint) (bool, error) {
+	//For now, always return false, but maybe we can make this return true for odd campaignIds
+	return false, nil
+}
+
 func (m *mockDB) InsertCampaign(c *db.Campaign) error {
 	return nil
 }
