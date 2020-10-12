@@ -15,13 +15,13 @@
 package commands
 
 import (
-	"fmt"
-	"net/http"
-	"strings"
-
+	"bytes"
+	"encoding/json"
+	"github.com/praetorian-inc/trident/pkg/db"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"net/http"
 )
 
 var cancelCommand = &cobra.Command{
@@ -29,7 +29,7 @@ var cancelCommand = &cobra.Command{
 	Short: "cancel campaign execution",
 	Long:  `can be used to halt a running campaign and stop all further spraying.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		describeGet(cmd, args)
+		cancelPost(cmd, args)
 	},
 }
 
@@ -49,10 +49,17 @@ func init() {
 func cancelPost(cmd *cobra.Command, args []string) {
 	orchestrator := viper.GetString("orchestrator-url")
 
-	//Build out our request body using a JSON serialized Query object
-	reqBody := strings.NewReader(fmt.Sprintf("{\"Filter\":{\"id\":%d}}", campaignID))
+	var q db.Query
+	q = db.Query{
+		Filter: map[string]interface{}{
+			"id": campaignID,
+		},
+	}
 
-	req, err := http.NewRequest("POST", orchestrator+"/cancel", reqBody)
+	buf := new(bytes.Buffer)
+	json.NewEncoder(buf).Encode(q)
+	req, err := http.NewRequest("POST", orchestrator+"/cancel", buf)
+
 	if err != nil {
 		log.Fatalf("error during request creation: %s", err)
 	}

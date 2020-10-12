@@ -39,6 +39,7 @@ var listTableHeaderNames = []string{
 	"campaign id",
 	"provider",
 	"metadata",
+	"status",
 	"creation date",
 }
 
@@ -46,6 +47,7 @@ var listTableHeaderFields = []string{
 	"id",
 	"provider",
 	"provider_metadata",
+	"status",
 	"created_at",
 }
 
