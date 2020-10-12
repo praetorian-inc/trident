@@ -134,8 +134,6 @@ func (s *PubSubScheduler) Schedule(campaign db.Campaign) error {
 	t := campaign.NotBefore
 	for _, p := range campaign.Passwords {
 		for _, u := range campaign.Users {
-			//Check to make sure we're not scheduling a cancelled/paused campaign
-
 			err := s.pushCampaignTask(&db.Task{
 				CampaignID:       campaign.ID,
 				NotBefore:        t,
