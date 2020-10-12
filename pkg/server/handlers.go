@@ -160,7 +160,7 @@ func (s *Server) CampaignDescribeHandler(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-// CancelHandler takes a campaignId from the user, then
+// CancelHandler takes a campaignID from the user, then
 // sets its status to cancelled in the database.
 // returns the parameters of that campaign via JSON
 func (s *Server) CancelHandler(w http.ResponseWriter, r *http.Request) {

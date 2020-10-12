@@ -39,8 +39,11 @@ type Datastore interface {
 }
 
 const (
+	//CampaignStatusCancelled is the value of the Status column if the campaign is Cancelled
 	CampaignStatusCancelled = "Cancelled"
-	CampaignStatusActive    = "Active"
+	//CampaignStatusActive is the value of the Status column if the campaign is not Cancelled
+	//For campaigns added before this change, they may also have an empty Status field for now
+	CampaignStatusActive = "Active"
 )
 
 // TridentDB implements the Datastore interface. it is backed by a gorm.DB type
@@ -253,11 +256,11 @@ func (t *TridentDB) ListCampaign() ([]Campaign, error) {
 }
 
 // IsCampaignCancelled takes a campaign ID and returns true if the campaign status is CampaignStatusCancelled
-func (t *TridentDB) IsCampaignCancelled(campaignId uint) (bool, error) {
+func (t *TridentDB) IsCampaignCancelled(campaignID uint) (bool, error) {
 	var matches []Campaign
 
 	var query = Query{
-		Filter: map[string]interface{}{"id": campaignId, "status": CampaignStatusCancelled},
+		Filter: map[string]interface{}{"id": campaignID, "status": CampaignStatusCancelled},
 	}
 
 	err := t.db.
