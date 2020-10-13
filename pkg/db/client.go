@@ -35,16 +35,9 @@ type Datastore interface {
 	ListCampaign() ([]Campaign, error)
 	DescribeCampaign(Query) (Campaign, error)
 	IsCampaignCancelled(uint) (bool, error)
+	UpdateCampaignStatus(uint, CampaignStatus) error
 	Close() error
 }
-
-const (
-	//CampaignStatusCancelled is the value of the Status column if the campaign is Cancelled
-	CampaignStatusCancelled = "Cancelled"
-	//CampaignStatusActive is the value of the Status column if the campaign is not Cancelled
-	//For campaigns added before this change, they may also have an empty Status field for now
-	CampaignStatusActive = "Active"
-)
 
 // TridentDB implements the Datastore interface. it is backed by a gorm.DB type
 type TridentDB struct {
@@ -129,6 +122,15 @@ func (t *TridentDB) InsertCampaign(campaign *Campaign) error {
 // future).
 func (t *TridentDB) UpdateCampaign(campaign *Campaign) error {
 	return t.db.Save(campaign).Error
+}
+
+// UpdateCampaignStatus sets the Status property for the provided campaign ID.
+func (t *TridentDB) UpdateCampaignStatus(campaignID uint, status CampaignStatus) error {
+	campaign := Campaign{
+		Model: Model{ID: campaignID},
+	}
+
+	return t.db.Model(&campaign).Update("Status", status).Error
 }
 
 // SelectResults is a required function by the Datastore interface. it uses a
@@ -257,7 +259,8 @@ func (t *TridentDB) ListCampaign() ([]Campaign, error) {
 
 // IsCampaignCancelled takes a campaign ID and returns true if the campaign status is CampaignStatusCancelled
 func (t *TridentDB) IsCampaignCancelled(campaignID uint) (bool, error) {
-	var matches []Campaign
+
+	var count int64
 
 	var query = Query{
 		Filter: map[string]interface{}{"id": campaignID, "status": CampaignStatusCancelled},
@@ -265,18 +268,14 @@ func (t *TridentDB) IsCampaignCancelled(campaignID uint) (bool, error) {
 
 	err := t.db.
 		Where(query.Filter).
-		Find(&matches).
+		Count(&count).
 		Error
 
 	if err != nil {
 		return false, err
 	}
 
-	if len(matches) != 0 {
-		return true, nil
-	}
-
-	return false, nil
+	return count > 0, nil
 }
 
 // DescribeCampaign queries all data about a specific campaign.

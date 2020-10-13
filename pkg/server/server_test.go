@@ -40,6 +40,10 @@ func (m *mockDB) UpdateCampaign(c *db.Campaign) error {
 	return nil
 }
 
+func (m *mockDB) UpdateCampaignStatus(campaignID uint, status db.CampaignStatus) error {
+	return nil
+}
+
 func (m *mockDB) SelectResults(q db.Query) ([]db.Result, error) {
 	var results []db.Result
 
@@ -143,10 +147,9 @@ func TestHealthzHandler(t *testing.T) {
 func TestCancelHandler(t *testing.T) {
 	s := initServer()
 
-	testBody := strings.NewReader("{\"Filter\":{\"id\":1}}")
+	testBody := strings.NewReader(`{"ID":10}`)
 
-	req, err := http.NewRequest("POST", "/cancel", testBody)
-
+	req, err := http.NewRequest("POST", "/campaign/cancel", testBody)
 	if err != nil {
 		t.Fatal(err)
 	}

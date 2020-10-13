@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/praetorian-inc/trident/pkg/db"
 	"net/http"
 	"os"
 	"strings"
@@ -174,7 +175,7 @@ func campaignCreate(cmd *cobra.Command, args []string) {
 	requestBody, err := json.Marshal(map[string]interface{}{
 		"not_before":        parsedNotBefore,
 		"not_after":         parsedNotAfter,
-		"status":            "Active",
+		"status":            db.CampaignStatusActive,
 		"schedule_interval": flagScheduleInterval,
 		"users":             users,
 		"passwords":         passwords,

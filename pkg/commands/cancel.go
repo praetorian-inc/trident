@@ -17,7 +17,6 @@ package commands
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/praetorian-inc/trident/pkg/db"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -34,7 +33,7 @@ var cancelCommand = &cobra.Command{
 }
 
 func init() {
-	cancelCommand.Flags().StringVarP(&campaignID, "campaign", "c", "1",
+	cancelCommand.Flags().StringVarP(&campaignID, "campaign", "c", "",
 		"the identifier of the campaign.")
 	err := cancelCommand.MarkFlagRequired("campaign")
 	if err != nil {
@@ -49,20 +48,17 @@ func init() {
 func cancelPost(cmd *cobra.Command, args []string) {
 	orchestrator := viper.GetString("orchestrator-url")
 
-	q := db.Query{
-		Filter: map[string]interface{}{
-			"id": campaignID,
-		},
+	q := map[string]interface{}{
+		"id": campaignID,
 	}
 
 	buf := new(bytes.Buffer)
 	err := json.NewEncoder(buf).Encode(q)
-
 	if err != nil {
 		log.Fatalf("error encoding cancel json request: %s", err)
 	}
 
-	req, err := http.NewRequest("POST", orchestrator+"/cancel", buf)
+	req, err := http.NewRequest("POST", orchestrator+"/campaign/cancel", buf)
 
 	if err != nil {
 		log.Fatalf("error during request creation: %s", err)

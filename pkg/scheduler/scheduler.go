@@ -157,13 +157,13 @@ func (s *PubSubScheduler) Schedule(campaign db.Campaign) error {
 
 func (s *PubSubScheduler) publishTask(ctx context.Context, task *db.Task) error {
 
-	//Check if task.CampaignID belongs to a cancelled/halted Campaign. If so skip it.
+	// check if task.CampaignID belongs to a cancelled/halted Campaign. If so skip it.
 	taskIsCancelled, err := s.db.IsCampaignCancelled(task.CampaignID)
 	if err != nil {
 		return fmt.Errorf("Error checking for campaign cancellation during scheduling: %w", err)
 	}
 	if taskIsCancelled {
-		//For now, just do nothing, let the task expire
+		// for now, just do nothing, let the task expire
 		return nil
 	}
 

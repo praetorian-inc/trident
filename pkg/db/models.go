@@ -29,6 +29,16 @@ type Model struct {
 	DeletedAt *time.Time `json:"deleted_at"`
 }
 
+type CampaignStatus string
+
+const (
+	// CampaignStatusCancelled is the value of the Status column if the campaign is Cancelled
+	CampaignStatusCancelled CampaignStatus = "Cancelled"
+	// CampaignStatusActive is the value of the Status column if the campaign is not Cancelled
+	// for campaigns added before this change, they may also have an empty Status field for now
+	CampaignStatusActive = "Active"
+)
+
 // Campaign stores the metadata associated with an entire password spraying campaign
 type Campaign struct {
 	// inherit the base model's fields
@@ -44,7 +54,7 @@ type Campaign struct {
 	ScheduleInterval time.Duration `json:"schedule_interval"`
 
 	// current status of the campaign, used to pause/cancel/resume without deletion
-	Status string `json:"status"`
+	Status CampaignStatus `json:"status"`
 
 	// the slice of usernames to guess in this campaign
 	Users pq.StringArray `json:"users" gorm:"type:varchar(255)[]"`

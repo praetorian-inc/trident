@@ -110,7 +110,7 @@ func describeGet(cmd *cobra.Command, args []string) {
 	if campaign.Status != "" {
 		fmt.Printf("Status:         %s\n", campaign.Status)
 	} else {
-		fmt.Printf("Status:         Active\n")
+		fmt.Printf("Status:         %s\n", db.CampaignStatusActive)
 	}
 	fmt.Printf("User Count:     %d\n", len(campaign.Users))
 	fmt.Printf("Password Count: %d\n", len(campaign.Passwords))
