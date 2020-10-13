@@ -159,6 +159,9 @@ func TestCancelHandler(t *testing.T) {
 
 	buf := new(bytes.Buffer)
 	err = json.NewEncoder(buf).Encode(q)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	req, err := http.NewRequest("POST", "/campaign/cancel", buf)
 	if err != nil {
