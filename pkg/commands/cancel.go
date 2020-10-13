@@ -21,6 +21,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"net/http"
+	"strconv"
 )
 
 var cancelCommand = &cobra.Command{
@@ -48,12 +49,17 @@ func init() {
 func cancelPost(cmd *cobra.Command, args []string) {
 	orchestrator := viper.GetString("orchestrator-url")
 
+	cID, err := strconv.ParseFloat(campaignID, 32)
+	if err != nil {
+		log.Fatalf("CampaignID value must be a number")
+	}
+
 	q := map[string]interface{}{
-		"id": campaignID,
+		"ID": cID,
 	}
 
 	buf := new(bytes.Buffer)
-	err := json.NewEncoder(buf).Encode(q)
+	err = json.NewEncoder(buf).Encode(q)
 	if err != nil {
 		log.Fatalf("error encoding cancel json request: %s", err)
 	}

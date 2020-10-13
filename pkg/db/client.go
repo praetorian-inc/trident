@@ -259,15 +259,14 @@ func (t *TridentDB) ListCampaign() ([]Campaign, error) {
 
 // IsCampaignCancelled takes a campaign ID and returns true if the campaign status is CampaignStatusCancelled
 func (t *TridentDB) IsCampaignCancelled(campaignID uint) (bool, error) {
-
 	var count int64
-
-	var query = Query{
-		Filter: map[string]interface{}{"id": campaignID, "status": CampaignStatusCancelled},
+	campaign := Campaign{
+		Model: Model{ID: campaignID},
 	}
 
 	err := t.db.
-		Where(query.Filter).
+		Model(&campaign).
+		Where("status = ?", CampaignStatusCancelled).
 		Count(&count).
 		Error
 
