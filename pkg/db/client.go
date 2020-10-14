@@ -29,11 +29,13 @@ import (
 // drivers to support other db platforms.
 type Datastore interface {
 	InsertCampaign(*Campaign) error
-
+	UpdateCampaign(*Campaign) error
 	SelectResults(Query) ([]Result, error)
 	InsertResult(*Result) error
 	ListCampaign() ([]Campaign, error)
 	DescribeCampaign(Query) (Campaign, error)
+	IsCampaignCancelled(uint) (bool, error)
+	UpdateCampaignStatus(uint, CampaignStatus) error
 	Close() error
 }
 
@@ -112,6 +114,23 @@ func (t *TridentDB) Close() error {
 // future).
 func (t *TridentDB) InsertCampaign(campaign *Campaign) error {
 	return t.db.Create(campaign).Error
+}
+
+// UpdateCampaign is a required function by the Datastore interface. it is a
+// thin wrapper around the Gorm save method, this is largely to help with
+// database mocking for tests (and for help with multiple drivers in the
+// future).
+func (t *TridentDB) UpdateCampaign(campaign *Campaign) error {
+	return t.db.Save(campaign).Error
+}
+
+// UpdateCampaignStatus sets the Status property for the provided campaign ID.
+func (t *TridentDB) UpdateCampaignStatus(campaignID uint, status CampaignStatus) error {
+	campaign := Campaign{
+		Model: Model{ID: campaignID},
+	}
+
+	return t.db.Model(&campaign).Update("Status", status).Error
 }
 
 // SelectResults is a required function by the Datastore interface. it uses a
@@ -229,13 +248,33 @@ func (t *TridentDB) StreamingInsertResults() chan *Result {
 func (t *TridentDB) ListCampaign() ([]Campaign, error) {
 	var campaigns []Campaign
 
-	err := t.db.Select([]string{"id", "provider", "provider_metadata", "created_at"}).
+	err := t.db.Select([]string{"id", "provider", "provider_metadata", "status", "created_at"}).
 		Find(&campaigns).Error
 	if err != nil {
 		return nil, err
 	}
 
 	return campaigns, nil
+}
+
+// IsCampaignCancelled takes a campaign ID and returns true if the campaign status is CampaignStatusCancelled
+func (t *TridentDB) IsCampaignCancelled(campaignID uint) (bool, error) {
+	var count int64
+	campaign := Campaign{
+		Model: Model{ID: campaignID},
+	}
+
+	err := t.db.
+		Model(&campaign).
+		Where("status = ?", CampaignStatusCancelled).
+		Count(&count).
+		Error
+
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
 }
 
 // DescribeCampaign queries all data about a specific campaign.

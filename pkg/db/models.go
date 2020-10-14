@@ -29,6 +29,21 @@ type Model struct {
 	DeletedAt *time.Time `json:"deleted_at"`
 }
 
+// The CampaignStatus enum indicates the current state of a Campaign
+type CampaignStatus string
+
+const (
+	// CampaignStatusCancelled is the value of the Status column if the campaign is Cancelled
+	// unlike a Halted campaign, a cancelled campaign must be completely restarted, it cannot be resumed
+	CampaignStatusCancelled CampaignStatus = "Cancelled"
+	// CampaignStatusActive is the value of the Status column if the campaign is not Cancelled
+	// for campaigns added before this change, they may also have an empty Status field for now
+	CampaignStatusActive = "Active"
+	// CampaignStatusHalted is the value of the Status column if the campaign is Halted.
+	// Halted campaigns can be resumed (via ASR-18), whereas cancelling is permanent
+	CampaignStatusHalted = "Halted"
+)
+
 // Campaign stores the metadata associated with an entire password spraying campaign
 type Campaign struct {
 	// inherit the base model's fields
@@ -42,6 +57,9 @@ type Campaign struct {
 
 	// a campaign should make requests with this interval in between them
 	ScheduleInterval time.Duration `json:"schedule_interval"`
+
+	// current status of the campaign, used to pause/cancel/resume without deletion
+	Status CampaignStatus `json:"status"`
 
 	// the slice of usernames to guess in this campaign
 	Users pq.StringArray `json:"users" gorm:"type:varchar(255)[]"`

@@ -27,7 +27,20 @@ import (
 
 type mockDB struct{}
 
+func (m *mockDB) IsCampaignCancelled(campaignID uint) (bool, error) {
+	//For now, always return false, but maybe we can make this return true for odd campaignIDs
+	return false, nil
+}
+
 func (m *mockDB) InsertCampaign(c *db.Campaign) error {
+	return nil
+}
+
+func (m *mockDB) UpdateCampaign(c *db.Campaign) error {
+	return nil
+}
+
+func (m *mockDB) UpdateCampaignStatus(campaignID uint, status db.CampaignStatus) error {
 	return nil
 }
 
@@ -121,6 +134,36 @@ func TestHealthzHandler(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(s.HealthzHandler)
+
+	handler.ServeHTTP(rr, req)
+
+	// Check the status code is what we expect.
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+			status, http.StatusOK)
+	}
+}
+
+func TestCancelHandler(t *testing.T) {
+	s := initServer()
+
+	q := map[string]interface{}{
+		"ID": 10,
+	}
+
+	buf := new(bytes.Buffer)
+	err := json.NewEncoder(buf).Encode(q)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req, err := http.NewRequest("POST", "/campaign/cancel", buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(s.CancelHandler)
 
 	handler.ServeHTTP(rr, req)
 

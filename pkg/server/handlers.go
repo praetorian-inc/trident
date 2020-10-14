@@ -159,3 +159,33 @@ func (s *Server) CampaignDescribeHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 }
+
+// CancelHandler takes a campaignID from the user, then
+// sets its status to cancelled in the database.
+func (s *Server) CancelHandler(w http.ResponseWriter, r *http.Request) {
+	type CancelRequest struct {
+		ID uint
+	}
+
+	var postBody CancelRequest
+
+	err := parse.DecodeJSONBody(w, r, &postBody)
+	if err != nil {
+		var mr *parse.MalformedRequest
+		if errors.As(err, &mr) {
+			http.Error(w, mr.Msg, mr.Status)
+		} else {
+			log.Errorf("unknown error decoding json: %s", err)
+			http.Error(w, http.StatusText(500), 500)
+		}
+		return
+	}
+
+	err = s.DB.UpdateCampaignStatus(postBody.ID, db.CampaignStatusCancelled)
+	if err != nil {
+		log.Printf("error updating database: %s", err)
+		http.Error(w, http.StatusText(500), 500)
+	}
+
+	log.Infof("campaign id=%d status has been set to cancelled", postBody.ID)
+}
