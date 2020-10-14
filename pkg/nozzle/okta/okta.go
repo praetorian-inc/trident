@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"golang.org/x/time/rate"
@@ -60,6 +61,17 @@ func (Driver) New(opts map[string]string) (nozzle.Nozzle, error) {
 	subdomain, ok := opts["subdomain"]
 	if !ok {
 		return nil, fmt.Errorf("okta nozzle requires 'subdomain' config parameter")
+	}
+
+	// check if operator entered full domain instead of subdomain
+	if strings.Contains(subdomain, ".okta.com") {
+		domains := strings.Split(subdomain, ".")
+		// i don't think sub-subdomains are legal for okta, but i could be wrong
+		if len(domains) != 3 {
+			return nil, fmt.Errorf("okta nozzle requires a valid 'subdomain' config parameter")
+		} else {
+			subdomain = domains[0]
+		}
 	}
 
 	return &Nozzle{
