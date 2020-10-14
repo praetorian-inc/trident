@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
 	"strings"
 	"testing"
 
@@ -148,17 +147,12 @@ func TestHealthzHandler(t *testing.T) {
 func TestCancelHandler(t *testing.T) {
 	s := initServer()
 
-	cID, err := strconv.ParseFloat("10", 32)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	q := map[string]interface{}{
-		"ID": cID,
+		"ID": 10,
 	}
 
 	buf := new(bytes.Buffer)
-	err = json.NewEncoder(buf).Encode(q)
+	err := json.NewEncoder(buf).Encode(q)
 	if err != nil {
 		t.Fatal(err)
 	}

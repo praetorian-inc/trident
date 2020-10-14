@@ -34,7 +34,7 @@ type CampaignStatus string
 
 const (
 	// CampaignStatusCancelled is the value of the Status column if the campaign is Cancelled
-	// unlike a Halted campaign, a cancelled campaign must be completely restarted, it  cannot be resumed
+	// unlike a Halted campaign, a cancelled campaign must be completely restarted, it cannot be resumed
 	CampaignStatusCancelled CampaignStatus = "Cancelled"
 	// CampaignStatusActive is the value of the Status column if the campaign is not Cancelled
 	// for campaigns added before this change, they may also have an empty Status field for now
