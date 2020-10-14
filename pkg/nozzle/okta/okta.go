@@ -69,9 +69,8 @@ func (Driver) New(opts map[string]string) (nozzle.Nozzle, error) {
 		// i don't think sub-subdomains are legal for okta, but i could be wrong
 		if len(domains) != 3 {
 			return nil, fmt.Errorf("okta nozzle requires a valid 'subdomain' config parameter")
-		} else {
-			subdomain = domains[0]
 		}
+		subdomain = domains[0]
 	}
 
 	return &Nozzle{
