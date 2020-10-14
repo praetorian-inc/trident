@@ -181,8 +181,6 @@ func (s *Server) CancelHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//ID := uint(postBody["ID"].(float64))
-
 	err = s.DB.UpdateCampaignStatus(postBody.ID, db.CampaignStatusCancelled)
 	if err != nil {
 		log.Printf("error updating database: %s", err)
