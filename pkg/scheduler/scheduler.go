@@ -157,18 +157,19 @@ func (s *PubSubScheduler) Schedule(campaign db.Campaign) error {
 
 func (s *PubSubScheduler) publishTask(ctx context.Context, task *db.Task) error {
 
-	// check if task.CampaignID belongs to a cancelled/halted Campaign. If so skip it.
-	taskIsCancelled, err := s.db.IsCampaignCancelled(task.CampaignID)
+	taskStatus, err := s.db.GetCampaignStatus(task.CampaignID)
 	if err != nil {
-		return fmt.Errorf("Error checking for campaign cancellation during scheduling: %w", err)
+		return fmt.Errorf("Error checking campaign status during scheduling: %w", err)
 	}
-	if taskIsCancelled {
+
+	// check if task.CampaignID belongs to a cancelled/halted Campaign. If so skip it.
+	if taskStatus == db.CampaignStatusCancelled {
 		// for now, just do nothing, let the task expire
 		return nil
 	}
 
-	if time.Until(task.NotBefore) > 5*time.Second {
-		// our task was not ready, reschedule it
+	if time.Until(task.NotBefore) > 5*time.Second || taskStatus == db.CampaignStatusPaused {
+		// our task was not ready or the campaign is paused, reschedule it
 		err := s.pushCampaignTask(task, task.CampaignID)
 		if err != nil {
 			return fmt.Errorf("error rescheduling task: %w", err)
