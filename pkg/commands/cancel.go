@@ -17,12 +17,13 @@ package commands
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/praetorian-inc/trident/pkg/db"
+	"net/http"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"net/http"
-	"strconv"
+
+	"github.com/praetorian-inc/trident/pkg/db"
 )
 
 var cancelCommand = &cobra.Command{
@@ -35,7 +36,7 @@ var cancelCommand = &cobra.Command{
 }
 
 func init() {
-	cancelCommand.Flags().StringVarP(&campaignID, "campaign", "c", "",
+	cancelCommand.Flags().UintVarP(&campaignID, "campaign", "c", 0,
 		"the identifier of the campaign.")
 	err := cancelCommand.MarkFlagRequired("campaign")
 	if err != nil {
@@ -45,7 +46,7 @@ func init() {
 	campaignCmd.AddCommand(cancelCommand)
 }
 
-func updateStatus(cID float64, status db.CampaignStatus) {
+func updateStatus(cID uint, status db.CampaignStatus) {
 	orchestrator := viper.GetString("orchestrator-url")
 
 	q := map[string]interface{}{
@@ -86,10 +87,5 @@ func updateStatus(cID float64, status db.CampaignStatus) {
 // cancelPost will post the parameters update the Status
 // of the campaign specified by the provided ID to CampaignStatusCancelled
 func cancelPost(cmd *cobra.Command, args []string) {
-	cID, err := strconv.ParseFloat(campaignID, 32)
-	if err != nil {
-		log.Fatalf("CampaignID value must be a number")
-	}
-
-	updateStatus(cID, db.CampaignStatusCancelled)
+	updateStatus(campaignID, db.CampaignStatusCancelled)
 }

@@ -15,10 +15,10 @@
 package commands
 
 import (
-	"github.com/praetorian-inc/trident/pkg/db"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"strconv"
+
+	"github.com/praetorian-inc/trident/pkg/db"
 )
 
 var pauseCommand = &cobra.Command{
@@ -31,7 +31,7 @@ var pauseCommand = &cobra.Command{
 }
 
 func init() {
-	pauseCommand.Flags().StringVarP(&campaignID, "campaign", "c", "",
+	pauseCommand.Flags().UintVarP(&campaignID, "campaign", "c", 0,
 		"the identifier of the campaign.")
 	err := pauseCommand.MarkFlagRequired("campaign")
 	if err != nil {
@@ -44,10 +44,5 @@ func init() {
 // pausePost will post the parameters update the Status
 // of the campaign specified by the provided ID to CampaignStatusPaused
 func pausePost(cmd *cobra.Command, args []string) {
-	cID, err := strconv.ParseFloat(campaignID, 32)
-	if err != nil {
-		log.Fatalf("CampaignID value must be a number")
-	}
-
-	updateStatus(cID, db.CampaignStatusPaused)
+	updateStatus(campaignID, db.CampaignStatusPaused)
 }

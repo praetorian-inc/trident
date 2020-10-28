@@ -40,7 +40,7 @@ const (
 	// for campaigns added before this change, they may also have an empty Status field for now
 	CampaignStatusActive = "Active"
 	// CampaignStatusPaused is the value of the Status column if the campaign is Paused.
-	// Paused campaigns can be resumed (via ASR-18), whereas cancelling is permanent
+	// Paused campaigns can be resumed, whereas cancelling is permanent
 	CampaignStatusPaused = "Paused"
 )
 

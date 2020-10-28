@@ -29,7 +29,7 @@ import (
 
 var (
 	// identifier for the campaign
-	campaignID string
+	campaignID uint
 )
 
 var describeCmd = &cobra.Command{
@@ -42,7 +42,7 @@ var describeCmd = &cobra.Command{
 }
 
 func init() {
-	describeCmd.Flags().StringVarP(&campaignID, "campaign", "c", "1",
+	describeCmd.Flags().UintVarP(&campaignID, "campaign", "c", 0,
 		"the identifier of the campaign.")
 	err := describeCmd.MarkFlagRequired("campaign")
 	if err != nil {

@@ -16,7 +16,6 @@ package commands
 
 import (
 	"encoding/json"
-	"github.com/praetorian-inc/trident/pkg/db"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -25,6 +24,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/praetorian-inc/trident/pkg/db"
 )
 
 var listCmd = &cobra.Command{
