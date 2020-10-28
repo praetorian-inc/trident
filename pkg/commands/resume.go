@@ -31,7 +31,7 @@ var resumeCommand = &cobra.Command{
 }
 
 func init() {
-	resumeCommand.Flags().UintVarP(&campaignID, "campaign", "c", -1,
+	resumeCommand.Flags().UintVarP(&campaignID, "campaign", "c", 0,
 		"the identifier of the campaign.")
 	err := resumeCommand.MarkFlagRequired("campaign")
 	if err != nil {
