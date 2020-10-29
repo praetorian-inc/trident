@@ -121,7 +121,7 @@ func main() {
 
 	// routes
 	r.Get("/healthz", s.HealthzHandler)
-	r.Post("/campaign/cancel", s.CancelHandler)
+	r.Post("/campaign/status", s.StatusUpdateHandler)
 	r.Post("/campaign", s.CampaignHandler)
 	r.Post("/results", s.ResultsHandler)
 	r.Get("/list", s.CampaignListHandler)

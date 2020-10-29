@@ -24,6 +24,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/praetorian-inc/trident/pkg/db"
 )
 
 var listCmd = &cobra.Command{
@@ -105,7 +107,12 @@ func listGet(cmd *cobra.Command, args []string) {
 			if !ok {
 				log.Fatal("there was an error retrieving results from the map")
 			}
-			row = append(row, v)
+			// Legacy handling for campaigns created pre-Status implementation
+			if field == "status" && v == "" {
+				row = append(row, db.CampaignStatusActive)
+			} else {
+				row = append(row, v)
+			}
 		}
 		t.AppendRows([]table.Row{row})
 	}

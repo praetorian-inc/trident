@@ -39,9 +39,9 @@ const (
 	// CampaignStatusActive is the value of the Status column if the campaign is not Cancelled
 	// for campaigns added before this change, they may also have an empty Status field for now
 	CampaignStatusActive = "Active"
-	// CampaignStatusHalted is the value of the Status column if the campaign is Halted.
-	// Halted campaigns can be resumed (via ASR-18), whereas cancelling is permanent
-	CampaignStatusHalted = "Halted"
+	// CampaignStatusPaused is the value of the Status column if the campaign is Paused.
+	// Paused campaigns can be resumed, whereas cancelling is permanent
+	CampaignStatusPaused = "Paused"
 )
 
 // Campaign stores the metadata associated with an entire password spraying campaign

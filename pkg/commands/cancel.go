@@ -17,11 +17,13 @@ package commands
 import (
 	"bytes"
 	"encoding/json"
+	"net/http"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"net/http"
-	"strconv"
+
+	"github.com/praetorian-inc/trident/pkg/db"
 )
 
 var cancelCommand = &cobra.Command{
@@ -34,7 +36,7 @@ var cancelCommand = &cobra.Command{
 }
 
 func init() {
-	cancelCommand.Flags().StringVarP(&campaignID, "campaign", "c", "",
+	cancelCommand.Flags().UintVarP(&campaignID, "campaign", "c", 0,
 		"the identifier of the campaign.")
 	err := cancelCommand.MarkFlagRequired("campaign")
 	if err != nil {
@@ -44,27 +46,21 @@ func init() {
 	campaignCmd.AddCommand(cancelCommand)
 }
 
-// cancelPost will post the parameters that make up the given campaign
-// and print the parameters to the CLI
-func cancelPost(cmd *cobra.Command, args []string) {
+func updateStatus(cID uint, status db.CampaignStatus) {
 	orchestrator := viper.GetString("orchestrator-url")
 
-	cID, err := strconv.ParseFloat(campaignID, 32)
-	if err != nil {
-		log.Fatalf("CampaignID value must be a number")
-	}
-
 	q := map[string]interface{}{
-		"ID": cID,
+		"ID":     cID,
+		"Status": status,
 	}
 
 	buf := new(bytes.Buffer)
-	err = json.NewEncoder(buf).Encode(q)
+	err := json.NewEncoder(buf).Encode(q)
 	if err != nil {
 		log.Fatalf("error encoding cancel json request: %s", err)
 	}
 
-	req, err := http.NewRequest("POST", orchestrator+"/campaign/cancel", buf)
+	req, err := http.NewRequest("POST", orchestrator+"/campaign/status", buf)
 
 	if err != nil {
 		log.Fatalf("error during request creation: %s", err)
@@ -86,4 +82,10 @@ func cancelPost(cmd *cobra.Command, args []string) {
 	if resp.StatusCode != 200 {
 		log.Fatalf("error cancelling campaign from server: %d", resp.StatusCode)
 	}
+}
+
+// cancelPost will post the parameters update the Status
+// of the campaign specified by the provided ID to CampaignStatusCancelled
+func cancelPost(cmd *cobra.Command, args []string) {
+	updateStatus(campaignID, db.CampaignStatusCancelled)
 }

@@ -29,7 +29,7 @@ import (
 
 var (
 	// identifier for the campaign
-	campaignID string
+	campaignID uint
 )
 
 var describeCmd = &cobra.Command{
@@ -42,11 +42,11 @@ var describeCmd = &cobra.Command{
 }
 
 func init() {
-	describeCmd.Flags().StringVarP(&campaignID, "campaign", "c", "1",
+	describeCmd.Flags().UintVarP(&campaignID, "campaign", "c", 0,
 		"the identifier of the campaign.")
 	err := describeCmd.MarkFlagRequired("campaign")
 	if err != nil {
-		log.Fatalf("issue during argument parsing: %s", err)
+		log.Fatalf("issue during argument parsing: %d", err)
 	}
 
 	campaignCmd.AddCommand(describeCmd)
@@ -57,7 +57,7 @@ func init() {
 func describeGet(cmd *cobra.Command, args []string) {
 	orchestrator := viper.GetString("orchestrator-url")
 
-	var flagFilter = fmt.Sprintf("{\"id\":%s}", campaignID)
+	var flagFilter = fmt.Sprintf("{\"id\":%d}", campaignID)
 
 	var filter map[string]interface{}
 	err := json.Unmarshal([]byte(flagFilter), &filter)
@@ -103,7 +103,7 @@ func describeGet(cmd *cobra.Command, args []string) {
 	}
 
 	fmt.Printf("-------------------------------------------\n")
-	fmt.Printf("Campaign #%s Parameters:\n", campaignID)
+	fmt.Printf("Campaign #%d Parameters:\n", campaignID)
 	fmt.Printf("-------------------------------------------\n")
 	fmt.Printf("Start Time:     %s\n", campaign.NotBefore)
 	fmt.Printf("End Time:       %s\n", campaign.NotAfter)

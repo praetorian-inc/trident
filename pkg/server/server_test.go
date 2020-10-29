@@ -148,7 +148,8 @@ func TestCancelHandler(t *testing.T) {
 	s := initServer()
 
 	q := map[string]interface{}{
-		"ID": 10,
+		"Status": db.CampaignStatusCancelled,
+		"ID":     10,
 	}
 
 	buf := new(bytes.Buffer)
@@ -157,13 +158,13 @@ func TestCancelHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	req, err := http.NewRequest("POST", "/campaign/cancel", buf)
+	req, err := http.NewRequest("POST", "/campaign/status", buf)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(s.CancelHandler)
+	handler := http.HandlerFunc(s.StatusUpdateHandler)
 
 	handler.ServeHTTP(rr, req)
 

@@ -133,6 +133,20 @@ func (t *TridentDB) UpdateCampaignStatus(campaignID uint, status CampaignStatus)
 	return t.db.Model(&campaign).Update("Status", status).Error
 }
 
+// GetCampaignStatus returns the CampaignStatus mapped to a specific campaignID
+func (t *TridentDB) GetCampaignStatus(campaignID uint) (CampaignStatus, error) {
+	var retrievedCampaign Campaign
+
+	err := t.db.Where("id = ?", campaignID).Select([]string{"id", "status"}).First(&retrievedCampaign).Error
+	if err != nil {
+		return "", err
+	} else if retrievedCampaign.Status == "" {
+		// Default value for campaigns with uninitialized Status (legacy handling)
+		return CampaignStatusActive, nil
+	}
+	return retrievedCampaign.Status, nil
+}
+
 // SelectResults is a required function by the Datastore interface. it uses a
 // query struct which contains both a database filter and a list of fields to
 // return.
