@@ -36,7 +36,7 @@ jobs:
 
     - name: Get version from tags
       id: get_version
-      run: echo ::set-env name=VERSION::${GITHUB_REF#refs/*/v}
+      run: echo "VERSION=${GITHUB_REF#refs/*/v}" >> $GITHUB_ENV
 
     - name: Set up gcloud command
       uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
