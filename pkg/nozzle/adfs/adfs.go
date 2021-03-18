@@ -23,7 +23,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	netUrl "net/url"
-	"strconv"
 	"strings"
 	"time"
 
@@ -269,7 +268,6 @@ func (n *Nozzle) idpInitiatedSignon(username, password string) (*event.AuthRespo
 	req, _ := http.NewRequest("POST", url, strings.NewReader(data))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("User-Agent", n.UserAgent)
-	req.Header.Add("Content-Length", strconv.Itoa(len(data)))
 	req.AddCookie(&http.Cookie{Name: "MSISSamlRequest", Value: MSISSamlRequestCookie})
 	resp, err := client.Do(req)
 	if err != nil {
