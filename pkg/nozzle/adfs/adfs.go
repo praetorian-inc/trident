@@ -150,7 +150,7 @@ var (
 </s:Envelope>`
 	idpInitiatedSignonURL      = "https://%s/adfs/ls/idpinitiatedsignon"
 	idpInitiatedSignonRequest1 = "SignInIdpSite=SignInIdpSite&SignInSubmit=Sign+in&SingleSignOut=SingleSignOut"
-	MSISSamlRequestCookie      = ""
+	msisSamlRequestCookie      = ""
 	idpInitiatedSignonRequest2 = "UserName=%s&Password=%s&AuthMethod=FormsAuthentication"
 )
 
@@ -243,7 +243,7 @@ func (n *Nozzle) usernameMixedStrategy(username, password string) (*event.AuthRe
 
 func (n *Nozzle) idpInitiatedSignon(username, password string) (*event.AuthResponse, error) {
 	// Set the MSISSamlRequest cookie
-	if MSISSamlRequestCookie == "" {
+	if msisSamlRequestCookie == "" {
 		err := n.setMSISSamlRequestCookie()
 		if err != nil {
 			return nil, err
@@ -268,11 +268,12 @@ func (n *Nozzle) idpInitiatedSignon(username, password string) (*event.AuthRespo
 	req, _ := http.NewRequest("POST", url, strings.NewReader(data))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("User-Agent", n.UserAgent)
-	req.AddCookie(&http.Cookie{Name: "MSISSamlRequest", Value: MSISSamlRequestCookie})
+	req.AddCookie(&http.Cookie{Name: "MSISSamlRequest", Value: msisSamlRequestCookie})
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close() // nolint:errcheck
 
 	var MSISAuthCookie = ""
 	for _, cookie := range resp.Cookies() {
@@ -311,14 +312,15 @@ func (n *Nozzle) setMSISSamlRequestCookie() error {
 	if err != nil {
 		return err
 	}
+	defer resp.Body.Close() // nolint:errcheck
 
 	for _, cookie := range resp.Cookies() {
 		if cookie.Name == "MSISSamlRequest" {
-			MSISSamlRequestCookie = cookie.Value
+			msisSamlRequestCookie = cookie.Value
 		}
 	}
 
-	if MSISSamlRequestCookie == "" {
+	if msisSamlRequestCookie == "" {
 		return fmt.Errorf("MSISSamlRequest cookie was not in the HTTP response")
 	}
 
