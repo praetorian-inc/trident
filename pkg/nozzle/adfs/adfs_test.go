@@ -44,4 +44,12 @@ func TestNozzle(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unable to open nozzle: %s", err)
 	}
+
+	_, err = nozzle.Open("adfs", map[string]string{
+		"domain":   "adfs.example.com",
+		"strategy": "usernamemixed",
+	})
+	if err != nil {
+		t.Fatalf("unable to open nozzle: %s", err)
+	}
 }

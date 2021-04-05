@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	netUrl "net/url"
 	"strings"
 	"time"
 
@@ -72,7 +73,7 @@ func (Driver) New(opts map[string]string) (nozzle.Nozzle, error) {
 
 	strategy, ok := opts["strategy"]
 	if !ok {
-		strategy = "usernamemixed"
+		strategy = "idpinitiatedsignon"
 	}
 
 	return &Nozzle{
@@ -147,6 +148,10 @@ var (
     </wst:RequestSecurityToken>
   </s:Body>
 </s:Envelope>`
+	idpInitiatedSignonURL      = "https://%s/adfs/ls/idpinitiatedsignon"
+	idpInitiatedSignonRequest1 = "SignInIdpSite=SignInIdpSite&SignInSubmit=Sign+in&SingleSignOut=SingleSignOut"
+	msisSamlRequestCookie      = ""
+	idpInitiatedSignonRequest2 = "UserName=%s&Password=%s&AuthMethod=FormsAuthentication"
 )
 
 func escape(s string) string {
@@ -236,6 +241,92 @@ func (n *Nozzle) usernameMixedStrategy(username, password string) (*event.AuthRe
 	}, nil
 }
 
+func (n *Nozzle) idpInitiatedSignon(username, password string) (*event.AuthResponse, error) {
+	// Set the MSISSamlRequest cookie
+	if msisSamlRequestCookie == "" {
+		err := n.setMSISSamlRequestCookie()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	url := fmt.Sprintf(idpInitiatedSignonURL, n.Domain)
+	data := fmt.Sprintf(idpInitiatedSignonRequest2, netUrl.QueryEscape(username), netUrl.QueryEscape(password))
+
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true, // nolint:gosec
+			},
+		},
+		// Ignore the redirect
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	req, _ := http.NewRequest("POST", url, strings.NewReader(data))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("User-Agent", n.UserAgent)
+	req.AddCookie(&http.Cookie{Name: "MSISSamlRequest", Value: msisSamlRequestCookie})
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close() // nolint:errcheck
+
+	var MSISAuthCookie = ""
+	for _, cookie := range resp.Cookies() {
+		if cookie.Name == "MSISAuth" {
+			MSISAuthCookie = cookie.Value
+		}
+	}
+
+	return &event.AuthResponse{
+		Valid:  resp.StatusCode == 302,
+		MFA:    false,
+		Locked: false,
+		Metadata: map[string]interface{}{
+			"status":         resp.StatusCode,
+			"MSISAuthCookie": MSISAuthCookie,
+		},
+	}, nil
+}
+
+func (n *Nozzle) setMSISSamlRequestCookie() error {
+	url := fmt.Sprintf(idpInitiatedSignonURL, n.Domain)
+	data := idpInitiatedSignonRequest1
+
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true, // nolint:gosec
+			},
+		},
+	}
+
+	req, _ := http.NewRequest("POST", url, strings.NewReader(data))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("User-Agent", n.UserAgent)
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close() // nolint:errcheck
+
+	for _, cookie := range resp.Cookies() {
+		if cookie.Name == "MSISSamlRequest" {
+			msisSamlRequestCookie = cookie.Value
+		}
+	}
+
+	if msisSamlRequestCookie == "" {
+		return fmt.Errorf("MSISSamlRequest cookie was not in the HTTP response")
+	}
+
+	return nil
+}
+
 // Login fulfils the nozzle.Nozzle interface and performs an authentication
 // requests against adfs. This function supports rate limiting and parses valid,
 // invalid, and locked out responses.
@@ -250,6 +341,10 @@ func (n *Nozzle) Login(username, password string) (*event.AuthResponse, error) {
 		return n.ntlmStrategy(username, password)
 	}
 
-	// Default strategy is usernamemixed
-	return n.usernameMixedStrategy(username, password)
+	if n.Strategy == "usernamemixed" {
+		return n.usernameMixedStrategy(username, password)
+	}
+
+	// Default strategy is idpinitiatedsignon
+	return n.idpInitiatedSignon(username, password)
 }
